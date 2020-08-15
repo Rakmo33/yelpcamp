@@ -7,8 +7,7 @@ Current Features Of The App :
     + Registrtion Payment at Sign Up
     + Forgot Password Option
 
-2. **Admin roles**
-    + Admins can block / unblock a user's account, delete any post / comment
+
 
 3. **CRUD options** for all posts / comments
 
@@ -16,6 +15,9 @@ Current Features Of The App :
 
 3. **Dashboard**
     + User dashboard has details of a user with a bio and their recent activities ( posts / comments )
+
+2. **Admin roles**
+    + Admins can block / unblock a user's account, delete any post / comment
 
 4. **Google Maps API**
     + Embeds a Google Map of the Location
