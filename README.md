@@ -4,7 +4,7 @@ Current Features Of The App :
 
 1. **User Authentication**
     + Email Verification at Sign Up
-    + Registrtion Payment at Sign Up
+    + Registration Payment at Sign Up
     + Forgot Password Option
 
 
