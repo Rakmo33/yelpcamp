@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <!-- Make site responsive on mobile/tablet -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            YelpCamp!
+        </title>
+
+        <!-- AUTOCOMPLETE JQUERY UI -->
+        <!-- <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"> -->
+        <link href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" rel="Stylesheet">
+        </link>
+        <script src='https://cdn.rawgit.com/pguso/jquery-plugin-circliful/master/js/jquery.circliful.min.js'></script>
+        <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <link rel="stylesheet" href="/stylesheets/main.css">
+        <!-- PAYMENT -->
+        <script src="https://js.stripe.com/v3/"></script>
+    </head>
+
+    <body>
+
+
+        <%- include("./navbar.ejs") %>
+
+
+        <div class="container">
+
+            <% if(currentUser && currentUser.isAdmin) { %>
+            <div class="alert alert-info" role="alert">GOD MODE IS ON !</div>
+            <% } %>
+
+            <% if(currentUser && currentUser.isBlocked) { %>
+            <div class="alert alert-danger" role="alert">Your account is blocked.</div>
+            <% } %>
+
+            <% if(error && error.length > 0) { %>
+            <div class="alert alert-danger" role="alert"><%= error %></div>
+
+            <% } else if(success && success.length > 0) { %>
+            <div class="alert alert-success" role="alert"><%= success %></div>
+
+            <% } %>
+        </div>
+
+        <div class="container">

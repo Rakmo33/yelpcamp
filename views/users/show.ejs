@@ -1,0 +1,71 @@
+<%- include("../partials/header.ejs") %>
+
+
+<div class="row">
+    <div class="col-md-offset-2 col-md-2">
+
+        <% if( user.avatar === "" ) { user.avatar = "https://i.dlpng.com/static/png/6728146_preview.png" } %>
+
+        <img src="<%= user.avatar %>" style="width: 90%;  border-radius: 50%;" alt="">
+
+        <% if( currentUser && (user._id.equals(currentUser._id) || currentUser.isAdmin)) { %>
+        <a href="<%=user.id%>/edit" class="btn btn-info">Edit Profile</a>
+        <% } %>
+        <% if( currentUser && currentUser.isAdmin && !user.isBlocked) { %>
+        <a href="<%=user.id%>/block" class="btn btn-danger">Block Account</a>
+        <% } %>
+        <% if( currentUser && currentUser.isAdmin && user.isBlocked) { %>
+        <a href="<%=user.id%>/block" class="btn btn-success">Unblock Account</a>
+        <% } %>
+
+    </div>
+    <div class="col-md-6">
+        <div class="username">
+            <strong><%= user.username%> </strong>
+        </div>
+        <div class="name">
+            <%= user.firstName%> <%= user.lastName%>
+        </div>
+        <div class="email">
+            <%= user.email%>
+        </div>
+        <div class="bio">
+            <p>
+                <%= user.bio%>
+            </p>
+        </div>
+    </div>
+</div>
+
+<br><br>
+<hr>
+<% user.activities.reverse() %>
+
+<% user.activities.forEach(function(activity){ %>
+<div class="row">
+    <div class="col-md-12">
+
+
+        <% if(activity.action === "post") { %>
+        <%= user.username %> posted a campground <a href="/campgrounds/<%=activity.campground.id %>">
+            <%= activity.campground.name %> </a>
+        <%= moment(activity.createdAt).fromNow() %>
+        <% } %>
+
+        <% if(activity.action === "comment") { %>
+        <%= user.username %> commented on <%= activity.campground.author %>'s campground <a
+            href="/campgrounds/<%=activity.campground.id %>">
+            <%= activity.campground.name %> </a> : "<%= activity.text %>"
+        <%= moment(activity.createdAt).fromNow() %>
+        <% } %>
+
+
+
+    </div>
+</div>
+
+<% }) %>
+
+
+
+<%- include("../partials/footer.ejs") %>

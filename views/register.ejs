@@ -1,0 +1,53 @@
+<%- include("partials/header.ejs") %>
+<div class="row">
+    <h1 style="text-align: center">Sign Up</h1>
+    <div style="width: 35%; margin: 50px auto;">
+        <form action="/verify" method="post">
+
+            <div class="form-group">
+                <label for="firstname">First Name *</label>
+                <input class="form-control" required id="firstname" type="text" name="firstname" placeholder="Tony">
+            </div>
+            <div class="form-group">
+                <label for="lastname">Last Name *</label>
+                <input class="form-control" required id="lastname" type="text" name="lastname" placeholder="Stark">
+            </div>
+            <div class="form-group">
+                <label for="username">Username *</label>
+                <input class="form-control" required id="username" type="text" name="username"
+                    placeholder="I_am_IronMan">
+
+            </div>
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <input class="form-control" required id="password" type="password" name="password"
+                    placeholder="LoveU3000">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input class="form-control" required id="email" type="text" name="email"
+                    placeholder="rdj3000@gmail.com">
+            </div>
+            <div class="form-group">
+                <label for="avatar">Avatar URL </label>
+                <input class="form-control" id="avatar" type="text" name="avatar" placeholder="ironman.png">
+            </div>
+            <div class="form-group">
+                <label for="bio">Bio </label>
+                <textarea class="form-control" id="bio" rows="3" name="bio"
+                    placeholder="Tell something about yourself..."></textarea>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-lg btn-primary btn-block">Verify Email & Sign Up!</button>
+            </div>
+        </form>
+        <div class="col-md-offset-2 col-md-12">
+            Already have an account ?
+            <a href="/login"> Login</a>
+        </div>
+
+    </div>
+
+</div>
+<%- include("partials/footer.ejs") %>

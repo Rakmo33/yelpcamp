@@ -1,0 +1,42 @@
+</div>
+<!-- jQuery CDN -->
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"
+    integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+
+<script>
+    $(function () {
+
+        $('#searchCampground').autocomplete({
+            source: function (req, res) {
+
+                $.ajax({
+                    url: "autocomplete/",
+                    dataType: "jsonp",
+                    type: "GET",
+                    data: req,
+                    success: function (data) {
+                        res(data)
+                    },
+                    error: function (err) {
+                        console.log(err.status)
+                    }
+                })
+            },
+
+            minLength: 1,
+            select: function (event, ui) {
+                if (ui.item) {
+                    $('#searchName').text(ui.item.label);
+                }
+            }
+        })
+
+    });
+</script>
+<!-- Bootstrap JS CDN -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+    integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+    crossorigin="anonymous"></script>
+</body>
+
+</html>
