@@ -14,7 +14,7 @@ var mongoose = require("mongoose")
 var User = require("./models/user")
 var Campground = require("./models/campground")
 var Comment = require("./models/comments")
-var seedDB = require("./seeds")
+// var seedDB = require("./seeds")
 
 flash = require("connect-flash")
 app.locals.moment = require('moment');
