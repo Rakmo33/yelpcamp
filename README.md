@@ -21,6 +21,5 @@ Current Features Of The App :
 
 4. **Google Maps API**
     + Embeds a Google Map of the Location
-
-5. 
+ 
 
