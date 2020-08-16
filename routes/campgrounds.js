@@ -15,6 +15,32 @@ var options = {
  
 var geocoder = NodeGeocoder(options);
 
+
+// CLOUDINARY FOR ADDING IMAGE
+var multer = require('multer');
+var storage = multer.diskStorage({
+  filename: function(req, file, callback) {
+    callback(null, Date.now() + file.originalname);
+  }
+});
+var imageFilter = function (req, file, cb) {
+    // accept image files only
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+        return cb(new Error('Only image files are allowed!'), false);
+    }
+    cb(null, true);
+};
+var upload = multer({ storage: storage, fileFilter: imageFilter})
+
+var cloudinary = require('cloudinary');
+cloudinary.config({ 
+  cloud_name: 'rakmo33', 
+  api_key: process.env.CLOUDINARY_API_KEY, 
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+
+
 // Apply to all routes
 // router.use(isLoggedIn, isPaid)
 
@@ -68,11 +94,11 @@ router.get("/new",isLoggedIn, isPaid,isNotBlocked, function (req, res) {
 })
 
 //? CREATE route : add new campground to database
-router.post("/",isLoggedIn, isPaid,isNotBlocked, function (req, res) {
+router.post("/",isLoggedIn, isPaid,isNotBlocked, upload.single('image'), function (req, res) {
 
     var name = req.body.name
     var price = req.body.price
-    var image = req.body.image
+    var image;
     var description = req.body.description
     var author= {
             id: req.user._id,
@@ -89,35 +115,43 @@ router.post("/",isLoggedIn, isPaid,isNotBlocked, function (req, res) {
         var lat = data[0].latitude;
         var lng = data[0].longitude;
         var location = data[0].formattedAddress;
-        var newCampground = {name: name, image: image, price: price, description: description, author:author, location: location, lat: lat, lng: lng};
 
-        Campground.create(newCampground, function (err, newlyCreated) {
-            if(err){
-                console.log(err);
-            } else {
-                //redirect back to campgrounds page
-                // console.log(newlyCreated);
-                var activity = {
-                    action : "post",
-                    campground : {
-                        name : newlyCreated.name,
-                        id: newlyCreated.id,
-                        author: newlyCreated.author.username
+        cloudinary.uploader.upload(req.file.path, function(result) {
+            // add cloudinary url for the image to the campground object under image property
+            image = result.secure_url;
+    
+            var newCampground = {name: name, image: image, price: price, description: description, author:author, location: location, lat: lat, lng: lng};
+
+           
+            Campground.create(newCampground, function (err, newlyCreated) {
+            
+                if(err){
+    
+                    req.flash('error', err.message);
+                    return res.redirect('back');
+                } 
+                else {
+    
+                    //redirect back to campgrounds page
+                    var activity = {
+                        action : "post",
+                        campground : {
+                            name : newlyCreated.name,
+                            id: newlyCreated.id,
+                            author: newlyCreated.author.username
+                        }
                     }
+    
+                    req.user.activities.push(activity);
+                    req.user.save();
+    
+                    res.redirect("/campgrounds");
                 }
-
-                req.user.activities.push(activity);
-                req.user.save();
-
-                console.log("asdasd********");
-                console.log(req.user.activities);
+            })
+          });
 
 
-
-
-                res.redirect("/campgrounds");
-            }
-        })
+       
 
         
 
