@@ -5,7 +5,10 @@ var userSchema = mongoose.Schema({
     name: String,
     firstName : String,
     lastName : String,
-    avatar : {type : String, default : "https://cdn.icon-icons.com/icons2/1378/PNG/512/avatardefault_92824.png"},
+    avatar : {
+        url : String,
+        public_id: String
+    },
     email : {type : String, unique : true},
     bio : {type : String, default : ""},
     password: String,

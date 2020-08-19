@@ -6,7 +6,7 @@
 
         <% if( user.avatar === "" ) { user.avatar = "https://i.dlpng.com/static/png/6728146_preview.png" } %>
 
-        <img src="<%= user.avatar %>" style="width: 90%;  border-radius: 50%;" alt="">
+        <img src="<%= user.avatar.url%>" style="width: 90%;  border-radius: 50%;" alt="">
 
         <% if( currentUser && (user._id.equals(currentUser._id) || currentUser.isAdmin)) { %>
         <a href="<%=user.id%>/edit" class="btn btn-info">Edit Profile</a>
