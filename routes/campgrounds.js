@@ -25,9 +25,9 @@ var storage = multer.diskStorage({
 });
 var imageFilter = function (req, file, cb) {
     // accept image files only
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
-        return cb(new Error('Only image files are allowed!'), false);
-    }
+    // if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+    //     return cb(new Error('Only image files are allowed!'), false);
+    // }
     cb(null, true);
 };
 var upload = multer({ storage: storage, fileFilter: imageFilter})
@@ -94,21 +94,20 @@ router.get("/new",isLoggedIn, isPaid,isNotBlocked, function (req, res) {
 })
 
 //? CREATE route : add new campground to database
-router.post("/",isLoggedIn, isPaid,isNotBlocked, upload.single('image'), function (req, res) {
+router.post("/",isLoggedIn, isPaid,isNotBlocked, upload.array('images'), function (req, res) {
 
     var name = req.body.name
     var price = req.body.price
-    var image;
-    var imageID;
     var description = req.body.description
     var author= {
             id: req.user._id,
             username: req.user.username,
             isAdmin: req.user.isAdmin
         }
+    var images = [];
   
 
-    geocoder.geocode(req.body.location, function (err, data) {
+    geocoder.geocode(req.body.location, async function (err, data) {
         if (err || !data.length) {
           req.flash('error', err.message);
           return res.redirect('back');
@@ -117,19 +116,32 @@ router.post("/",isLoggedIn, isPaid,isNotBlocked, upload.single('image'), functio
         var lng = data[0].longitude;
         var location = data[0].formattedAddress;
 
-        cloudinary.v2.uploader.upload(req.file.path, function(err, result) {
-            
-            if(err) {
-                req.flash('error', err.message);
-                return res.redirect('back');
-              }
-
-            // add cloudinary url for the image to the campground object under image property
-            image = result.secure_url;
-            imageID = result.public_id;
-
+    try{ 
+        for (const file of req.files){
+            // console.log("Files :" + req.files);
+            if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+                req.flash("error", "File format not supported! Please upload only png/jpg/jpeg files.");
+                return res.redirect("back");
+            }
+            else if (req.files.length > 5) {
+                
+                req.flash("error", "Maximum 5 Images can be uploaded!");
+                return res.redirect("back");
+            }
+            let image = await cloudinary.v2.uploader.upload(file.path);
+            images.push({
+                url : image.secure_url,
+                public_id : image.public_id
+            })
+        }    
+        
+    }catch(err){
+        req.flash("error", err.message);
+        return res.redirect("back");
+    }   
+         
     
-            var newCampground = {name: name,imageID: imageID, image: image, price: price, description: description, author:author, location: location, lat: lat, lng: lng};
+            var newCampground = {name: name,images : images, price: price, description: description, author:author, location: location, lat: lat, lng: lng};
 
            
             Campground.create(newCampground, function (err, newlyCreated) {
@@ -157,7 +169,6 @@ router.post("/",isLoggedIn, isPaid,isNotBlocked, upload.single('image'), functio
                     res.redirect("/campgrounds");
                 }
             })
-          });
 
 
        
@@ -198,12 +209,14 @@ router.get("/:id/edit",isLoggedIn, isPaid, middleware.checkCampgroundOwnership,i
 })
 
 //? UPDATE ROUTE
-router.put("/:id", upload.single('image') , isLoggedIn, isPaid, middleware.checkCampgroundOwnership,isNotBlocked,  function (req, res) {
+router.put("/:id", upload.array('images') , isLoggedIn, isPaid, middleware.checkCampgroundOwnership,isNotBlocked,  function (req, res) {
     geocoder.geocode(req.body.location,  function (err, data) {
         if (err || !data.length) {
           req.flash('error', err.message);
           return res.redirect('back');
         }
+
+        var images  = [];
        
     
         Campground.findById(req.params.id, async function(err, campground){
@@ -213,13 +226,33 @@ router.put("/:id", upload.single('image') , isLoggedIn, isPaid, middleware.check
             } else {
                 
                 // if image is uploaded
-                if(req.file){
+                if(req.files){
+
+                    console.log("********" + req.files)
 
                     try{
-                        await cloudinary.v2.uploader.destroy(campground.imageID);
-                        var result = await cloudinary.v2.uploader.upload(req.file.path);
-                        campground.imageID = result.public_id;
-                        campground.image = result.secure_url;
+                        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+                            req.flash("error", "File format not supported! Please upload only png/jpg/jpeg files.");
+                            return res.redirect("back");
+                        }
+                        else if (req.files.length > 5) {
+                            req.flash("error", "Maximum 5 Images can be uploaded!");
+                            return res.redirect("back");
+                        }
+
+                        for ( const image of campground.images){
+                            await cloudinary.v2.uploader.destroy(image.public_id);
+                        }
+
+                        for (const file of req.files){
+                           
+                            let image = await cloudinary.v2.uploader.upload(file.path);
+                            images.push({
+                                url : image.secure_url,
+                                public_id : image.public_id
+                            })
+                        }    
+                        
 
                     }catch(err){
                         req.flash("error", err.message);
@@ -229,6 +262,7 @@ router.put("/:id", upload.single('image') , isLoggedIn, isPaid, middleware.check
                 }
 
                 campground.name = req.body.campground.name;
+                campground.images = images;
                 campground.price = req.body.campground.price;
                 campground.description = req.body.campground.description;
                 campground.lat = data[0].latitude;
@@ -254,7 +288,9 @@ router.delete("/:id",isLoggedIn, isPaid, middleware.checkCampgroundOwnership,isN
             return res.redirect("back");
         }
         try{
-            await cloudinary.v2.uploader.destroy(campground.imageID);
+            for ( const image of campground.images){
+                await cloudinary.v2.uploader.destroy(image.public_id);
+            }
             campground.remove();
             req.flash("success","Successfully Deleted!");
             res.redirect("/campgrounds");

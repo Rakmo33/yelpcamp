@@ -18,7 +18,10 @@
     <div class="col-md-9">
 
         <div class="thumbnail">
-            <img class="img-responsive" src=" <%= campground.image %>" alt="">
+
+            <% campground.images.forEach(function(image){ %>
+                <img  class="img-responsive" src=" <%=image.url%>" alt="" style="width : 200px; display: inline;"  height="200px">
+            <% }) %>
             <div class="caption">
                 <h4 class="pull-right">$<%=campground.price%>/night</h4>
                 <h4><a href=""><%= campground.name %></a></h4>
