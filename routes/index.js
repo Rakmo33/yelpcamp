@@ -1,3 +1,4 @@
+// Routers
 var express = require("express")
 var router = express.Router()
 
@@ -6,168 +7,241 @@ var async = require("async");
 var nodemailer = require("nodemailer");
 var crypto = require("crypto");
 
+// User model
 var User = require("../models/user")
+const Campground = require("../models/campground");
 
+// Authentication
 var passport = require("passport")
 
+// Middleware
 const { isLoggedIn } = require('../middleware/index');
-const Campground = require("../models/campground");
 
 // Set your secret key. Remember to switch to your live secret key in production!
 // See your keys here: https://dashboard.stripe.com/account/apikeys
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+
+
+// ************ CLOUDINARY FOR ADDING IMAGE ************************
+
+var multer = require('multer');
+var storage = multer.diskStorage({
+  filename: function (req, file, callback) {
+    callback(null, Date.now() + file.originalname);
+  }
+});
+var imageFilter = function (req, file, cb) {
+  // accept image files only
+  // if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+  //   return cb(new Error('Only image files are allowed!'), false);
+  // }
+  cb(null, true);
+};
+var upload = multer({ storage: storage, fileFilter: imageFilter })
+
+var cloudinary = require('cloudinary');
+cloudinary.config({
+  cloud_name: 'rakmo33',
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+//****************************************************************** */
+
 var newUser;
 var globalPassword;
 var globalEmail;
+var globalAvatarPath;
+var globalResetPasswordToken;
+var globalResetPasswordExpires;
 
-//? HOME ROUTE
+//? HOME ROUTE //////////////////////////////////////////////
 router.get("/", function (req, res) {
-    res.render("landing.ejs")
+  // render landing page
+  res.render("landing.ejs")
 })
 
-//! AUTH ROUTES
-
-//? Register form
+//? Register form //////////////////////////////////////////////
 router.get("/register", function (req, res) {
-    res.render("register.ejs",{page:"register"})
+  // renders register forms which submits to /verify
+  res.render("register.ejs", { page: "register" })
 })
 
-//? CONFIRM OTP
-router.post("/verify",function (req, res, next){
 
-  newUser = new User({ 
+//? SEND OTP mail after validation////////////////////////////////////
+router.post("/verify", upload.single('image'), async function (req, res, next) {
+
+  var userExists;
+
+  // If user with same email exists, return back
+  await User.findOne({ email: req.body.email }, function (err, foundUser) {
+    if (foundUser) {
+      req.flash("error", "A user with given email address already exists! Please try another Email ID.");
+      userExists = true;
+      return res.redirect("back")
+    }
+    else
+      userExists = false;
+  })
+
+  if (userExists) {
+    await console.log("[ ERROR : User with same email ID exists! ]");
+    return
+  }
+
+
+  // Avatar image upload
+  try {
+    // File format checking
+    if (!req.file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+      req.flash("error", "File format not supported! Please upload only png/jpg/jpeg files.");
+      return res.redirect("back");
+    }
+
+    // storing temporary path
+    globalAvatarPath = req.file.path;
+
+  } catch (err) {
+    req.flash("error", err.message);
+    return res.redirect("back");
+  }
+
+  // Storing user information from the form temporarily
+  newUser = new User({
     username: req.body.username,
-    firstName : req.body.firstname,
-    lastName : req.body.lastname,
-    email : req.body.email,
-    avatar: req.body.avatar,
-    bio : req.body.bio
- })
+    firstName: req.body.firstname,
+    lastName: req.body.lastname,
+    email: req.body.email,
+    avatar: {
+      url: req.file.path,//these fields will be updated when user will be verified
+      public_id: "123"
+    },
+    bio: req.body.bio
+  })
 
- globalPassword = req.body.password;
-
+  globalPassword = req.body.password;
 
   async.waterfall([
-    function(done) {
-      crypto.randomBytes(4, function(err, buf) {
+    //! function1 : create a token for OTP
+    function (done) {
+      crypto.randomBytes(4, function (err, buf) {
         var token = buf.toString('hex');
         done(err, token);
       });
     },
-    function(token, done) {
-      User.findOne({ username: "dummy" }, function(err, user) {
-        if (!user) {
-          req.flash('error', 'dummy account needed');
-          console.log("here")
+    //! function2 : storing token
+    function (token, done) {
+      
+      // Storing the token and session info
+      globalResetPasswordToken = token;
+      globalResetPasswordExpires = Date.now() + 3600000; // 1 hour
 
-          return res.redirect('/forgot');
-        }
+      done(null, token);
 
-
-        user.resetPasswordToken = token;
-        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-
-
-
-        user.save(function(err) {
-          done(err, token, user);
-        });
-      });
     },
-    function(token, user, done) {
+    //! SENDING OTP via GMAIL
+    function (token, done) {
       var smtpTransport = nodemailer.createTransport({
-        service: 'Gmail', 
+        service: 'Gmail',
         auth: {
           user: 'rakmo.yelpcamp@gmail.com',
           pass: process.env.GMAILPW
         }
       });
 
-
       globalEmail = req.body.email;
 
       var mailOptions = {
         to: req.body.email,
         from: 'rakmo.yelpcamp@gmail.com',
-        subject: 'Verify your email for YelpCamp',
+        subject: 'Verify your Email for YelpCamp',
         text: 'Here is your One Time Password : ' + token
-          
       };
-      smtpTransport.sendMail(mailOptions, function(err) {
-        console.log('mail sent');
-        req.flash('success', 'An e-mail has been sent to ' + req.body.email + ' with further instructions.');
+
+
+      smtpTransport.sendMail(mailOptions, function (err) {
+        console.log('[ SUCCESS : OTP mail sent to ' + req.body.email + ']');
+        req.flash('success', 'Check your email : ' + req.body.email + '. Confirm your Email ID by entering the OTP sent to you.');
         done(err, 'done');
       });
     }
-  ], function(err) {
+  ], 
+  // ! Redirect to /verify
+  function (err) {
 
-    // if(err.message){
-    //   console.log(err.message);
-    //   res.redirect("back")
-    // }
-    if (err) return next(err);
+    if (err)
+      return next(err);
+
     res.redirect('/verify');
   });
+
 })
 
-// ? Confirm otp
-router.get("/verify", function(req, res){
-
+// ? Confirm otp //////////////////////////////////////////////
+router.get("/verify", function (req, res) {
+  // render OTP form which submits to /register
   res.render("otp.ejs")
-
 })
 
 
-// ? REGISTER ROUTE
-router.post("/register", function(req, res){
+// ? REGISTER ROUTE ///////////////////////////////////////////////
+router.post("/register", upload.single('image'), function (req, res) {
 
   async.waterfall([
-    function(done) {
-      User.findOne({ resetPasswordToken: req.body.otp, resetPasswordExpires: { $gt: Date.now() } }, function(err, user) {
-        if (!user) {
-          req.flash('error', 'Invalid OTP');
+    //! function 1 : confirm OTP + upload DP to coudinary + register and login user + redirect to checkout
+    function (done) {
+
+      // Checking if OTP is valid
+      if (globalResetPasswordToken != req.body.otp || globalResetPasswordExpires < Date.now()) {
+        req.flash('error', 'OTP entered is Invalid or Expired! Make sure you enter the otp within 30 minutes of recieving the mail!');
+        console.log("[ ERROR : OTP error ]")
+        return res.redirect('back');
+      }
+
+      // Resetting the otp token
+      globalResetPasswordExpires = undefined;
+      globalResetPasswordToken = undefined;
+
+      // uploading temporarily saved DP and getting a permanent URL for it
+      cloudinary.v2.uploader.upload(globalAvatarPath, function (err, result) {
+
+        if (err) {
+          req.flash('error', err.message);
           return res.redirect('back');
         }
-        
-            user.resetPasswordToken = undefined;
-            user.resetPasswordExpires = undefined;
 
-            // alert("yoyo")
-           
+        // updating user info
+        newUser.avatar.url = result.secure_url;
+        newUser.avatar.public_id = result.public_id;
 
-            user.save();
+        // Registering User
+        User.register(newUser, globalPassword, function (err, user) {
+          if (err) {
+            console.log("[ ERROR : User cannot be registered! ]" + err.message)
+            req.flash("error", err.message)
+            res.redirect("back")
+          }
+          else {
 
-            
-          
+            // User registered and logged in automatically!
+            req.logIn(user, function (err) {
+              done(err, user);
+            });
 
+            console.log("[ SUCCESS : User registered successfully! ]")
+            req.flash("success", "Signed Up Successfully! Welcome to yelpcamp, " + user.username + " !")
 
-            User.register(newUser, globalPassword, function (err, user) {
-              if (err) {
-                  console.log("**********************" +err.message)
-                  req.flash("error", err.message)
-                  res.redirect("back")
-
-              }
-              else {
-
-                  // passport.authenticate("local")(req, res, function () {
-                    req.logIn(user, function(err) {
-                      done(err, user);
-                    });
-                      req.flash("success", "Signed Up Successfully! Welcome to yelpcamp, " + user.username + " !")
-  
-                      res.redirect("/checkout")
-                  // })
-              }
-          })
-          
-        
+            // For payment
+            res.redirect("/checkout")
+          }
+        })
       });
     },
-    function(user, done) {
+    //! function 2 : send account verification mail 
+    function (user, done) {
       var smtpTransport = nodemailer.createTransport({
-        service: 'Gmail', 
+        service: 'Gmail',
         auth: {
           user: 'rakmo.yelpcamp@gmail.com',
           pass: process.env.GMAILPW
@@ -180,131 +254,131 @@ router.post("/register", function(req, res){
         text: 'Hello,\n\n' +
           'This is a confirmation that your account with email address ' + user.email + ' has just been verified.\n'
       };
-      smtpTransport.sendMail(mailOptions, function(err) {
+      smtpTransport.sendMail(mailOptions, function (err) {
+        console.log("[ SUCCESS : Account verified! Verification mail sent!]")
         req.flash('success', 'Success! Your account has been verified.');
         done(err);
       });
     }
-  ], function(err) {
+  ], 
+  // ! function 3 : redirect to main page
+  function (err) {
     res.redirect('/campgrounds');
   });
-  
 })
 
 
-//? Login form
+//? Login form ///////////////////////////////////////////
 router.get("/login", function (req, res) {
-    
-   
-    res.render("login.ejs",{page:"login"})
+  // render login form
+  res.render("login.ejs", { page: "login" })
 })
 
-//? Login logic
-// router.post("/login", passport.authenticate("local", {
+//? Login logic/////////////////////////////////////////////
+router.post('/login', function (req, res, next) {
 
-//     successRedirect: "/campgrounds",
-//     failureRedirect: "/login"
-// }), function (req, res) {
-    
-// })
-
-router.post('/login', function(req, res, next) {
-    passport.authenticate('local', function(err, user, info) {
+  // Passport authentication
+  passport.authenticate('local', function (err, user, info) {
+    if (err) {
+      return next(err); // will generate a 500 error
+    }
+    // Generate a JSON response reflecting authentication status
+    if (!user) {
+      req.flash('error', 'authentication failed')
+      return res.redirect('back')
+      // return res.send(401,{ success : false, message : 'authentication failed' });
+    }
+    req.login(user, function (err) {
       if (err) {
-        return next(err); // will generate a 500 error
-      }
-      // Generate a JSON response reflecting authentication status
-      if (! user) {
         req.flash('error', 'authentication failed')
         return res.redirect('back')
-        // return res.send(401,{ success : false, message : 'authentication failed' });
       }
-      req.login(user, function(err){
-        if(err){
-            req.flash('error', 'authentication failed')
-            return res.redirect('back')
-        }
 
-        req.flash('success', 'authentication succeeded')
-             return res.redirect('/campgrounds')
-      });
-    })(req, res, next);
-  });
+      req.flash('success', 'authentication succeeded')
+      console.log("[ SUCCESS : User logged in ]")
+      return res.redirect('/campgrounds')
+    });
+  })(req, res, next);
+});
 
-//? Logout
+//? Logout /////////////////////////////////////////////////////
 router.get("/logout", function (req, res) {
-    req.logOut();
-    req.flash("success", "Goodbye!")
-    res.redirect("/")
+  req.logOut();
+  req.flash("success", "Goodbye!")
+  console.log("[ SUCCESS : User logged Out ]")
+  res.redirect("/")
 })
 
-// ? GET Checkout
+// ? GET Checkout /////////////////////////////////////////////
 router.get('/checkout', isLoggedIn, (req, res) => {
 
-    if(req.user.isPaid){
-        req.flash('success', 'Your account is already paid!')
-        return res.redirect('/campgrounds', {})
-    }
+  if (req.user.isPaid) {
+    req.flash('success', 'Your account is already paid!')
+    return res.redirect('/campgrounds', {})
+  }
 
-    res.render('checkout.ejs', { amount : 100 });
+  // Pay 100 paise (Re 1)
+  res.render('checkout.ejs', { amount: 100 });
 
 });
 
 // ? POST Checkout
-router.post('/pay',isLoggedIn, async (req, res) => {
+router.post('/pay', isLoggedIn, async (req, res) => {
 
-    const { paymentMethodId, items, currency } = req.body;
+  const { paymentMethodId, items, currency } = req.body;
 
-    const orderAmount = 100;
-  
-    try {
-      // Create new PaymentIntent with a PaymentMethod ID from the client.
-      const intent = await stripe.paymentIntents.create({
-        amount: orderAmount,
-        currency: currency,
-        payment_method: paymentMethodId,
-        error_on_requires_action: true,
-        confirm: true
+  const orderAmount = 100;
+
+  try {
+    // Create new PaymentIntent with a PaymentMethod ID from the client.
+    const intent = await stripe.paymentIntents.create({
+      amount: orderAmount,
+      currency: currency,
+      payment_method: paymentMethodId,
+      error_on_requires_action: true,
+      confirm: true
+    });
+
+    req.user.isPaid = true;
+    await req.user.save()
+
+    console.log("[ SUCCESS :  Payment received! ]");
+    // The payment is complete and the money has been moved
+
+    // Send the client secret to the client to use in the demo
+    res.send({ clientSecret: intent.client_secret });
+  } catch (e) {
+    // Handle "hard declines" e.g. insufficient funds, expired card, card authentication etc
+    // See https://stripe.com/docs/declines/codes for more
+    if (e.code === "authentication_required") {
+      res.send({
+        error:
+          "This card requires authentication in order to proceeded. Please use a different card."
       });
-
-      req.user.isPaid = true;
-      await req.user.save()
-  
-      console.log("💰 Payment received!");
-      // The payment is complete and the money has been moved
-      // You can add any post-payment code here (e.g. shipping, fulfillment, etc)
-  
-      // Send the client secret to the client to use in the demo
-      res.send({ clientSecret: intent.client_secret });
-    } catch (e) {
-      // Handle "hard declines" e.g. insufficient funds, expired card, card authentication etc
-      // See https://stripe.com/docs/declines/codes for more
-      if (e.code === "authentication_required") {
-        res.send({
-          error:
-            "This card requires authentication in order to proceeded. Please use a different card."
-        });
-      } else {
-        res.send({ error: e.message });
-      }
+    } else {
+      res.send({ error: e.message });
     }
- });
+  }
+});
 
- // forgot password
-router.get('/forgot', function(req, res) {
+//? forgot password/////////////////////////////////////////////////
+router.get('/forgot', function (req, res) {
   res.render('forgot.ejs');
 });
 
-router.post('/forgot', function(req, res, next) {
+//? Forgot POST ///////////////////////////////////////////////
+router.post('/forgot', function (req, res, next) {
   async.waterfall([
-    function(done) {
-      crypto.randomBytes(20, function(err, buf) {
+    //! function 1 : generate token
+    function (done) {
+      crypto.randomBytes(20, function (err, buf) {
         var token = buf.toString('hex');
         done(err, token);
       });
     },
-    function(token, done) {
-      User.findOne({ email: req.body.email }, function(err, user) {
+    // ! function 2 : Check if user exists and store OTP info
+    function (token, done) {
+      User.findOne({ email: req.body.email }, function (err, user) {
         if (!user) {
           req.flash('error', 'No account with that email address exists.');
           return res.redirect('/forgot');
@@ -313,14 +387,15 @@ router.post('/forgot', function(req, res, next) {
         user.resetPasswordToken = token;
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
 
-        user.save(function(err) {
+        user.save(function (err) {
           done(err, token, user);
         });
       });
     },
-    function(token, user, done) {
+    // ! function 3 : send forgot password mail
+    function (token, user, done) {
       var smtpTransport = nodemailer.createTransport({
-        service: 'Gmail', 
+        service: 'Gmail',
         auth: {
           user: 'rakmo.yelpcamp@gmail.com',
           pass: process.env.GMAILPW
@@ -332,59 +407,68 @@ router.post('/forgot', function(req, res, next) {
         subject: 'Node.js Password Reset',
         text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
           'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-          'http://' + req.headers.host + '/reset/' + token + '\n\n' + ' or ' +  'https://yelpcamp-project-001.herokuapp.com/reset/' + token + '\n\n' +
+          'http://' + req.headers.host + '/reset/' + token + '\n\n' + ' or ' + 'https://yelpcamp-project-001.herokuapp.com/reset/' + token + '\n\n' +
           'If you did not request this, please ignore this email and your password will remain unchanged.\n'
       };
-      smtpTransport.sendMail(mailOptions, function(err) {
-        console.log('forgot password mail sent');
+      smtpTransport.sendMail(mailOptions, function (err) {
+        console.log('[ SUCCESS : Forgot password mail sent! ]');
         req.flash('success', 'An e-mail has been sent to ' + user.email + ' with further instructions.');
         done(err, 'done');
       });
     }
-  ], function(err) {
+  ],
+  //! functon 3 : redirect nowhere 
+   function (err) {
     if (err) return next(err);
     res.redirect('/forgot');
   });
 });
 
-router.get('/reset/:token', function(req, res) {
-  User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, function(err, user) {
+// ? Password reset link to render password reset form
+router.get('/reset/:token', function (req, res) {
+  // ! Check if a user with password reset token exists
+  User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, function (err, user) {
     if (!user) {
       req.flash('error', 'Password reset token is invalid or has expired.');
+      console.log("[ ERROR : password reset token not valid")
       return res.redirect('/forgot');
     }
-    res.render('reset.ejs', {token: req.params.token});
+    // Render password rset form
+    res.render('reset.ejs', { token: req.params.token });
   });
 });
 
-router.post('/reset/:token', function(req, res) {
+// ?
+router.post('/reset/:token', function (req, res) {
   async.waterfall([
-    function(done) {
-      User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, function(err, user) {
+    // ! find user, validate token, confirm password, reset password
+    function (done) {
+      User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, function (err, user) {
         if (!user) {
           req.flash('error', 'Password reset token is invalid or has expired.');
           return res.redirect('back');
         }
-        if(req.body.password === req.body.confirm) {
-          user.setPassword(req.body.password, function(err) {
+        if (req.body.password === req.body.confirm) {
+          user.setPassword(req.body.password, function (err) {
             user.resetPasswordToken = undefined;
             user.resetPasswordExpires = undefined;
 
-            user.save(function(err) {
-              req.logIn(user, function(err) {
+            user.save(function (err) {
+              req.logIn(user, function (err) {
                 done(err, user);
               });
             });
           })
         } else {
-            req.flash("error", "Passwords do not match.");
-            return res.redirect('back');
+          req.flash("error", "Passwords do not match.");
+          return res.redirect('back');
         }
       });
     },
-    function(user, done) {
+    // ! send password reset mail
+    function (user, done) {
       var smtpTransport = nodemailer.createTransport({
-        service: 'Gmail', 
+        service: 'Gmail',
         auth: {
           user: 'rakmo.yelpcamp@gmail.com',
           pass: process.env.GMAILPW
@@ -397,52 +481,40 @@ router.post('/reset/:token', function(req, res) {
         text: 'Hello,\n\n' +
           'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n'
       };
-      smtpTransport.sendMail(mailOptions, function(err) {
+      smtpTransport.sendMail(mailOptions, function (err) {
         req.flash('success', 'Success! Your password has been changed.');
         done(err);
       });
     }
-  ], function(err) {
+  ], 
+  // ! redirect to main page
+  function (err) {
     res.redirect('/campgrounds');
   });
 });
 
-router.get('/autocomplete/', function(req , res, next){
+// ? AJAX SEARCH autocomplete
+router.get('/autocomplete/', function (req, res, next) {
 
   var regex = new RegExp(req.query["term"], 'i');
-  var campgroundFilter = Campground.find({name: regex},{'name':1}).sort({"updated_at":-1}).sort({"created_at":-1}).limit(20);
-  campgroundFilter.exec(function(err, data){
-
-    console.log("651613*****")
-    console.log(data)
+  var campgroundFilter = Campground.find({ name: regex }, { 'name': 1 }).sort({ "updated_at": -1 }).sort({ "created_at": -1 }).limit(20);
+  campgroundFilter.exec(function (err, data) {
 
     var result = [];
-    if(!err){
-
-      if(data && data.length && data.length > 0){
-        data.forEach(function(camp){
+    if (!err) {
+      if (data && data.length && data.length > 0) {
+        data.forEach(function (camp) {
           let obj = {
-            id : camp._id,
+            id: camp._id,
             label: camp.name
           }
           result.push(obj);
         });
-        
       }
-
       res.jsonp(result);
-
     }
-   
-
   })
-
 })
-
-
-
- 
-
 
 
 module.exports = router;
