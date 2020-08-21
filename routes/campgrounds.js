@@ -228,46 +228,62 @@ router.put("/:id", upload.array('images') , isLoggedIn, isPaid, middleware.check
                 // if image is uploaded
                 if(req.files){
 
-                    console.log("********" + req.files)
-
                     try{
-                        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
-                            req.flash("error", "File format not supported! Please upload only png/jpg/jpeg files.");
-                            return res.redirect("back");
-                        }
-                        else if (req.files.length > 5) {
-                            req.flash("error", "Maximum 5 Images can be uploaded!");
-                            return res.redirect("back");
+
+                            // deleteImages is an array of values from checkboxes and contains public_id of images as values
+                        if(req.body.deleteImages && req.body.deleteImages.length){
+                            for(const image of req.body.deleteImages){
+                                // delete image from clouidinary
+                                await cloudinary.v2.uploader.destroy(image);
+
+                                // delete image from database
+                              
+                                var index = campground.images.findIndex(found => found.public_id === image);
+                                campground.images.splice(index,1);
+                            }
                         }
 
-                        for ( const image of campground.images){
-                            await cloudinary.v2.uploader.destroy(image.public_id);
-                        }
-
+                        req.files.forEach(function(file){
+                            if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+                                req.flash("error", "File format not supported! Please upload only png/jpg/jpeg files.");
+                                return res.redirect("back");
+                            }
+                        })
+                       
                         for (const file of req.files){
                            
                             let image = await cloudinary.v2.uploader.upload(file.path);
-                            images.push({
+                            campground.images.push({
                                 url : image.secure_url,
                                 public_id : image.public_id
                             })
                         }    
-                        
 
                     }catch(err){
                         req.flash("error", err.message);
                         return res.redirect("back");
                     }           
-                          
                 }
 
                 campground.name = req.body.campground.name;
-                campground.images = images;
                 campground.price = req.body.campground.price;
                 campground.description = req.body.campground.description;
                 campground.lat = data[0].latitude;
                 campground.lng = data[0].longitude;
                 campground.location = data[0].formattedAddress;
+
+                var activity = {
+                    action : "edit",
+                    campground : {
+                        name : campground.name,
+                        id: campground.id,
+                        author: campground.author.username
+                    }
+                }
+
+                req.user.activities.push(activity);
+                req.user.save();
+
 
                 campground.save();
 
@@ -292,6 +308,17 @@ router.delete("/:id",isLoggedIn, isPaid, middleware.checkCampgroundOwnership,isN
                 await cloudinary.v2.uploader.destroy(image.public_id);
             }
             campground.remove();
+            var activity = {
+                action : "delete",
+                campground : {
+                    name : campground.name,
+                    id: campground.id,
+                    author: campground.author.username
+                }
+            }
+
+            req.user.activities.push(activity);
+            req.user.save();
             req.flash("success","Successfully Deleted!");
             res.redirect("/campgrounds");
         }catch(err){

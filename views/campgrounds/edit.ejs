@@ -3,14 +3,29 @@
     <h1 style="text-align: center;">Edit <%= campground.name %></h1>
     <div style="width: 30%; margin: 30px auto;">
 
-        <form action="/campgrounds/<%= campground._id %>?_method=PUT" method="POST"  enctype="multipart/form-data">
+        <form id="postEditForm" action="/campgrounds/<%= campground._id %>?_method=PUT" method="POST"
+            enctype="multipart/form-data">
             <div class="form-group">
                 <input class="form-control" type="text" name="campground[name]" placeholder="name"
                     value="<%=campground.name%>">
             </div>
-            <div class="form-group">
-                <label for="image">Image</label>
-                <input type="file" id="image" name="image" accept="image/*" required multiple>
+            <div>
+                <input type="file" id="imageUpload" accept="images/*" name="images" multiple onchange="foo()" />
+                <div>
+                    <% campground.images.forEach(function(image, i) { %>
+                    <img src="<%= image.url %>" width="100px" />
+                    <label for="image<%= i %>">Delete?</label>
+                    <input type="checkbox" name="deleteImages[]" class="imageDeleteCheckbox" id="image<%= i %>"
+                        value="<%= image.public_id %>">
+                    <% }); %>
+                </div>
+            </div>
+            <div class="error">
+
+            </div>
+           
+             <div class="preview">
+                <!-- <img id="blah"  alt="your image" width="100" height="100" /> -->
             </div>
             <div class="form-group">
                 <input class="form-control" type="number" name="campground[price]" min="0.00" step="0.01"
@@ -27,7 +42,7 @@
 
             </div>
             <div class="form-group">
-                <button class="btn btn-primary btn-lg btn-block">
+                <button  class="btn btn-primary btn-lg btn-block">
                     Submit!
                 </button>
             </div>
@@ -36,6 +51,74 @@
         <a href="/campgrounds">Go back!</a>
 
     </div>
+    <script>
+        // find post edit form
+        let postEditForm = document.getElementById('postEditForm');
+        // add submit listener to post edit form
+        postEditForm.addEventListener('submit', function (event) {
+            // find length of uploaded images
+            let imageUploads = document.getElementById('imageUpload').files.length;
+            // find total number of existing images
+            let existingImgs = document.querySelectorAll('.imageDeleteCheckbox').length;
+            // find total number of potential deletions
+            let imgDeletions = document.querySelectorAll('.imageDeleteCheckbox:checked').length;
+            // calculate total after removal of deletions and addition of new uploads
+            let newTotal = existingImgs - imgDeletions + imageUploads;
+            console.log("**zing "+ newTotal)
+            // if newTotal is greater than four
+            if (newTotal > 5) {
+                // prevent form from submitting
+                event.preventDefault();
+                // calculate removal amount
+                let removalAmt = newTotal - 5;
+                // alert user of their error
+                alert(`You need to remove at least ${existingImgs + imageUploads - 5} existing image${removalAmt === 1 ? '' : 's'}!`);
+            }
+            if (newTotal < 1) {
+                // prevent form from submitting
+                event.preventDefault();
+               
+                // alert user of their error
+                alert(`Cannot delete all the images! Please unselect at least one image...`);
+            }
+        });
+
+        function foo() {
+            var input = document.getElementById("imageUpload")
+            var preview = document.querySelector(".preview")
+
+            // find length of uploaded images
+            let imageUploads = document.getElementById('imageUpload').files.length;
+            // find total number of existing images
+            let existingImgs = document.querySelectorAll('.imageDeleteCheckbox').length;
+            // find total number of potential deletions
+            let imgDeletions = document.querySelectorAll('.imageDeleteCheckbox:checked').length;
+            // calculate total after removal of deletions and addition of new uploads
+            let newTotal = existingImgs - imgDeletions + imageUploads;
+
+            preview.innerHTML = "";
+
+            var error = document.querySelector(".error")
+            if (imageUploads <= 5){
+                error.innerHTML = `<p style="color: green">${input.files.length} images uploaded Successfully<\p>`;
+
+                for (var i = 0; i < input.files.length; i++) {
+                    var src = window.URL.createObjectURL(input.files[i]);
+                    preview.innerHTML += `<div id="blah${i}" >
+                    <img id="blah" src="${src}" alt="your image" width="100" height="100" />                    
+                    </div>`
+
+                }
+            }
+            else{
+                document.getElementById("imageUpload").value = "";
+
+                error.innerHTML = `<p style="color: red">Maximum 5 images can be uploaded! Please try again...<\p>`;
+
+            }
+        }
+
+    </script>
 
 </div>
 

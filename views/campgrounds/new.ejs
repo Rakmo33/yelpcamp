@@ -9,7 +9,7 @@
             </div>
             <div class="form-group">
                 <label for="image">Image</label>
-                <input class="custom-file-input" title="upload new files" type="file" id="image" name="images"
+                <input class="custom-file-input" title="upload new files" type="file" id="images" name="images"
                     accept="images/*" required multiple onchange="foo()">
             </div>
             <div class="error">
@@ -19,7 +19,7 @@
 
 
                 function foo2() {
-                    var input = document.getElementById("image")
+                    var input = document.getElementById("images")
                     var arr;
 
                     for (var i = 0; i < input.files.length; i++) {
@@ -39,13 +39,10 @@
 
 
                 function foo() {
-                    var input = document.getElementById("image")
+                    var input = document.getElementById("images")
                     var preview = document.querySelector(".preview")
 
                     preview.innerHTML = "";
-
-
-
 
                     var error = document.querySelector(".error")
                     if (input.files.length < 6) {
@@ -59,29 +56,29 @@
 
                         }
                     }
-                    else
+                    else {
+                        document.getElementById("imageUpload").value = "";
                         error.innerHTML = `<p style="color: red">${input.files.length} images are not allowed. Maximum 5 images can be uploaded! Please try again!<\p>`;
 
 
-
-
+                    }
                 }
 
-                // find post edit form
-                let postEditForm = document.getElementById('newCampgroundForm');
+                // find post create form
+                let newCampgroundForm = document.getElementById('newCampgroundForm');
                 // add submit listener to post edit form
-                postEditForm.addEventListener('submit', function (event) {
+                newCampgroundForm.addEventListener('submit', function (event) {
 
-                    var input = document.getElementById("image")
-                  
+                    var input = document.getElementById("images")
+
                     // if total is greater than five
                     if (input.files.length > 5) {
                         // prevent form from submitting
                         event.preventDefault();
                         // calculate removal amount
-                       
+
                         // alert user of their error
-                        alert(`MAXIMUM 5 IMAGES ARE ALLOWED!`);
+                        alert(`Maximum 5 images can be uploaded! Please Try Again...`);
                     }
                 });
             </script>
