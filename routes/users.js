@@ -28,11 +28,27 @@ cloudinary.config({
 //  ? view USER PROFILE///////////////////////////////////
 router.get("/:id", middleware.isLoggedIn, middleware.isPaid, function (req, res) {
     User.findById(req.params.id, function (err, foundUser) {
-        if (err) {
+        if (err || !foundUser) {
             req.flash("error", "something went wrong!")
             res.redirect("back")
         } else {
             res.render("users/show.ejs", { user: foundUser })
+        }
+    })
+})
+
+//  ? view ALL USERS ///////////////////////////////////
+router.get("/", middleware.isLoggedIn, middleware.isAdmin, function (req, res) {
+
+    // res.render("users/showall.ejs", { users: allUsers, currentUser: req.user})
+   
+    User.find({}, function (err, allUsers) {
+
+        if(err){
+            req.flash("error", "something went wrong!")
+            res.redirect("/campgrounds")
+        } else {
+            res.render("users/showall.ejs", { users: allUsers, currentUser: req.user})
         }
     })
 })

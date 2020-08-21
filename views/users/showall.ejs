@@ -1,0 +1,27 @@
+<%- include("../partials/header.ejs") %>
+
+
+<div class="row">
+
+    <ul>
+        <% users.forEach(function(user){ %>
+
+            <li>
+                <img height="200px" src="<%= user.avatar.url %>" alt="">
+                <a href="/users/<%=user._id%>">
+                    <%= user.username %>
+                    <% if(user.isAdmin){ %>
+                        <em>(admin)</em>
+                    <% } %>
+
+                </a>
+            </li>
+
+        <%})%>
+    </ul>
+
+
+
+</div>
+
+<%- include("../partials/footer.ejs") %>

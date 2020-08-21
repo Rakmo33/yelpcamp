@@ -60,8 +60,6 @@ mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true, useCrea
 //     console.log("ERROR: ", err.message)
 // })
 
-console.log(process.env.GMAILPW)
-
 app.use(bodyParser.urlencoded({ extended: true }))
 
 //! IMP __dirname is current directory

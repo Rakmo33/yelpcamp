@@ -8,7 +8,7 @@
 
         <img src="<%= user.avatar.url%>" style="width: 90%;  border-radius: 50%;" alt="">
 
-        <% if( currentUser && (user._id.equals(currentUser._id) || currentUser.isAdmin)) { %>
+        <% if( currentUser && (user._id.equals(currentUser._id))) { %>
         <a href="<%=user.id%>/edit" class="btn btn-info">Edit Profile</a>
         <% } %>
         <% if( currentUser && currentUser.isAdmin && !user.isBlocked) { %>
@@ -37,7 +37,11 @@
     </div>
 </div>
 
-<br><br>
+<br>
+<% if( currentUser && currentUser.isAdmin) { %>
+<a href="/users" class="btn btn-danger">All users</a>
+<% } %>
+<br>
 <hr>
 <% user.activities.reverse() %>
 
@@ -58,6 +62,19 @@
             <%= activity.campground.name %> </a> : "<%= activity.text %>"
         <%= moment(activity.createdAt).fromNow() %>
         <% } %>
+
+        <% if(activity.action === "edit") { %>
+        <%= user.username %> edited <%= activity.campground.author %>'s campground <a
+            href="/campgrounds/<%=activity.campground.id %>">
+            <%= activity.campground.name %> </a>
+        <%= moment(activity.createdAt).fromNow() %>
+        <% } %>
+
+        <% if(activity.action === "delete") { %>
+        <%= user.username %> deleted a campground
+        <%= moment(activity.createdAt).fromNow() %>
+        <% } %>
+
 
 
 
