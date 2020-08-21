@@ -22,6 +22,8 @@ Current Features Of The App :
 4. **Google Maps API**
     + Embeds a Google Map of the Location
 
-5. **Single Image Upload from local machine**
+5. **Image upload feature for profile picture**
+
+5. **Multiple Image Upload (maximum 5 images) for new campground and edit campground routes**
  
 
