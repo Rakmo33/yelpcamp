@@ -15,7 +15,7 @@ const Campground = require("../models/campground");
 var passport = require("passport")
 
 // Middleware
-const { isLoggedIn } = require('../middleware/index');
+const { isLoggedIn, isAdmin } = require('../middleware/index');
 
 // Set your secret key. Remember to switch to your live secret key in production!
 // See your keys here: https://dashboard.stripe.com/account/apikeys
@@ -41,6 +41,7 @@ var imageFilter = function (req, file, cb) {
 var upload = multer({ storage: storage, fileFilter: imageFilter })
 
 var cloudinary = require('cloudinary');
+const middlewareObj = require("../middleware/index");
 cloudinary.config({
   cloud_name: 'rakmo33',
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -103,7 +104,7 @@ router.post("/verify", upload.single('image'), async function (req, res, next) {
       // storing temporary path
       globalAvatarPath = req.file.path;
     }
-    else{
+    else {
       globalAvatarPath = "default"
     }
 
@@ -210,18 +211,25 @@ router.post("/register", upload.single('image'), function (req, res) {
       globalResetPasswordToken = undefined;
 
       // uploading temporarily saved DP and getting a permanent URL for it
-      if(globalAvatarPath != "default"){
+      if (globalAvatarPath != "default") {
         cloudinary.v2.uploader.upload(globalAvatarPath, function (err, result) {
 
           if (err) {
             req.flash('error', err.message);
             return res.redirect('back');
           }
-  
+
           // updating user info
           newUser.avatar.url = result.secure_url;
           newUser.avatar.public_id = result.public_id;
-  
+
+          var activity = {
+            action: "register",
+            actor: newUser.username
+          }
+
+          newUser.activities.push(activity);
+
           // Registering User
           User.register(newUser, globalPassword, function (err, user) {
             if (err) {
@@ -230,47 +238,47 @@ router.post("/register", upload.single('image'), function (req, res) {
               res.redirect("back")
             }
             else {
-  
+
               // User registered and logged in automatically!
               req.logIn(user, function (err) {
                 done(err, user);
               });
-  
+
               console.log("[ SUCCESS : User registered successfully! ]")
               req.flash("success", "Signed Up Successfully! Welcome to yelpcamp, " + user.username + " !")
-  
+
               // For payment
               res.redirect("/checkout")
             }
           })
         });
-      }else{
-         // updating user info
-         newUser.avatar.url = "https://res.cloudinary.com/rakmo33/image/upload/v1598011377/avatar-1577909_1280_pvmw0e.webp";
-         newUser.avatar.public_id = "avatar-1577909_1280_pvmw0e";
- 
-         // Registering User
-         User.register(newUser, globalPassword, function (err, user) {
-           if (err) {
-             console.log("[ ERROR : User cannot be registered! ]" + err.message)
-             req.flash("error", err.message)
-             res.redirect("back")
-           }
-           else {
- 
-             // User registered and logged in automatically!
-             req.logIn(user, function (err) {
-               done(err, user);
-             });
- 
-             console.log("[ SUCCESS : User registered successfully! ]")
-             req.flash("success", "Signed Up Successfully! Welcome to yelpcamp, " + user.username + " !")
- 
-             // For payment
-             res.redirect("/checkout")
-            }
-          })
-     }
+      } else {
+        // updating user info
+        newUser.avatar.url = "https://res.cloudinary.com/rakmo33/image/upload/v1598011377/avatar-1577909_1280_pvmw0e.webp";
+        newUser.avatar.public_id = "avatar-1577909_1280_pvmw0e";
+
+        // Registering User
+        User.register(newUser, globalPassword, function (err, user) {
+          if (err) {
+            console.log("[ ERROR : User cannot be registered! ]" + err.message)
+            req.flash("error", err.message)
+            res.redirect("back")
+          }
+          else {
+
+            // User registered and logged in automatically!
+            req.logIn(user, function (err) {
+              done(err, user);
+            });
+
+            console.log("[ SUCCESS : User registered successfully! ]")
+            req.flash("success", "Signed Up Successfully! Welcome to yelpcamp, " + user.username + " !")
+
+            // For payment
+            res.redirect("/checkout")
+          }
+        })
+      }
     },
     //! function 2 : send account verification mail 
     function (user, done) {
@@ -421,6 +429,13 @@ router.post('/forgot', function (req, res, next) {
         user.resetPasswordToken = token;
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
 
+        var activity = {
+          action: "demand-password-reset",
+          actor: req.body.email
+        }
+
+        user.activities.push(activity)
+
         user.save(function (err) {
           done(err, token, user);
         });
@@ -487,6 +502,13 @@ router.post('/reset/:token', function (req, res) {
             user.resetPasswordToken = undefined;
             user.resetPasswordExpires = undefined;
 
+            var activity = {
+              action: "password-reset",
+              actor: user.username
+            }
+
+            user.activities.push(activity)
+
             user.save(function (err) {
               req.logIn(user, function (err) {
                 done(err, user);
@@ -548,6 +570,34 @@ router.get('/autocomplete/', function (req, res, next) {
       res.jsonp(result);
     }
   })
+})
+
+
+router.get("/activities", isLoggedIn,isAdmin,   function (req, res) {
+
+  User.find({}, function (err, allUsers) {
+
+    if (err) {
+      req.flash("error", "something went wrong!")
+      res.redirect("/campgrounds")
+    } else {
+
+      var activities = [];
+
+      allUsers.forEach(function (user) {
+        user.activities.forEach(function (activity) {
+          activities.push(activity)
+        })
+      })
+
+      activities.sort((a, b) => {
+        return a.createdAt < b.createdAt ? 1 : -1;
+      })
+
+      res.render("users/activities.ejs", { activities: activities, currentUser: req.user })
+    }
+  })
+
 })
 
 

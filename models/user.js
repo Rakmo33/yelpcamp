@@ -2,7 +2,7 @@ var mongoose = require("mongoose")
 var passportLocalMongoose = require("passport-local-mongoose")
 
 var userSchema = mongoose.Schema({
-    name: String,
+    username: String,
     firstName : String,
     lastName : String,
     avatar : {
@@ -18,6 +18,7 @@ var userSchema = mongoose.Schema({
     activities : [
         {
             action : String,
+            actor : String,
             campground :{
                 id: {
                     type: mongoose.Schema.Types.ObjectId,

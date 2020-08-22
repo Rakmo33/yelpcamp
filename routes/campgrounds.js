@@ -160,7 +160,8 @@ router.post("/",isLoggedIn, isPaid,isNotBlocked, upload.array('images'), functio
                             name : newlyCreated.name,
                             id: newlyCreated.id,
                             author: newlyCreated.author.username
-                        }
+                        },
+                        actor : req.user.username
                     }
     
                     req.user.activities.push(activity);
@@ -278,7 +279,8 @@ router.put("/:id", upload.array('images') , isLoggedIn, isPaid, middleware.check
                         name : campground.name,
                         id: campground.id,
                         author: campground.author.username
-                    }
+                    },
+                    actor : req.user.username
                 }
 
                 req.user.activities.push(activity);
@@ -314,7 +316,8 @@ router.delete("/:id",isLoggedIn, isPaid, middleware.checkCampgroundOwnership,isN
                     name : campground.name,
                     id: campground.id,
                     author: campground.author.username
-                }
+                },
+                actor : req.user.username
             }
 
             req.user.activities.push(activity);

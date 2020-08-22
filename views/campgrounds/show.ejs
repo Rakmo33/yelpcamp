@@ -20,7 +20,7 @@
         <div class="thumbnail">
 
             <% campground.images.forEach(function(image){ %>
-                <img  class="img-responsive" src=" <%=image.url%>" alt="" style=" display: inline;"  height="200px">
+            <img class="img-responsive" src=" <%=image.url%>" alt="" style=" display: inline;" height="200px">
             <% }) %>
             <div class="caption">
                 <h4 class="pull-right">$<%=campground.price%>/night</h4>
@@ -38,12 +38,15 @@
                     <em class="pull-right"> <%= moment(campground.createdAt).fromNow() %> </em>
                 </p>
 
-                <% if( currentUser && ( campground.author.id.equals(currentUser._id) || currentUser.isAdmin )) { %>
+                <% if( currentUser && ( campground.author.id.equals(currentUser._id) )) { %>
                 <a href="/campgrounds/<%=campground._id%>/edit" class="btn btn-xs btn-warning">Edit</a>
+                <% } %>
+                <% if(currentUser  && ( campground.author.id.equals(currentUser._id)  || currentUser.isAdmin)) { %>
                 <form action="/campgrounds/<%=campground._id%>?_method=DELETE" method="POST" class="delete-form">
                     <button class="btn btn-xs btn-danger ">Delete</button>
                 </form>
-                <% } %>
+                <%}%>
+              
 
             </div>
         </div>
@@ -74,7 +77,7 @@
                     <p>
                         <%= comment.text %>
                     </p>
-                    <% if( currentUser && (comment.author.id.equals(currentUser._id) || currentUser.isAdmin)) { %>
+                    <% if( currentUser && (comment.author.id.equals(currentUser._id))) { %>
                     <a href="/campgrounds/<%=campground._id%>/comments/<%=comment._id%>/edit"
                         class="btn btn-xs btn-warning">
                         EDIT

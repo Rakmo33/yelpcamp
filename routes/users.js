@@ -40,8 +40,6 @@ router.get("/:id", middleware.isLoggedIn, middleware.isPaid, function (req, res)
 //  ? view ALL USERS ///////////////////////////////////
 router.get("/", middleware.isLoggedIn, middleware.isAdmin, function (req, res) {
 
-    // res.render("users/showall.ejs", { users: allUsers, currentUser: req.user})
-
     User.find({}, function (err, allUsers) {
 
         if (err) {
@@ -61,7 +59,8 @@ router.get("/:id/edit", middleware.isLoggedIn, middleware.isPaid, middleware.isN
         if (err) {
             req.flash("error", "something went wrong!")
             res.redirect("back")
-        } else {
+        } else {          
+
             res.render("users/edit.ejs", { user: foundUser })
         }
     })
@@ -108,6 +107,12 @@ router.put("/:id", upload.single('user[image]'), middleware.isLoggedIn, middlewa
                 user.avatar.public_id = "avatar-1577909_1280_pvmw0e";
             }
 
+            var activity = {
+                action: "edit-profile",
+                actor: req.user.username
+            }
+
+            user.activities.push(activity);
             user.firstName = req.body.user.firstName;
             user.lastName = req.body.user.lastName;
             user.email = req.body.user.email;
@@ -136,17 +141,30 @@ router.get("/:id/block", middleware.isLoggedIn, middleware.isPaid, middleware.is
             if (foundUser.isBlocked) {
                 foundUser.isBlocked = false;
                 req.flash("success", "User successfully unblocked!")
+                var activity = {
+                    action: "unblock-profile",
+                    actor: req.user.username
+                }
             }
             else {
                 foundUser.isBlocked = true;
                 req.flash("success", "User successfully blocked!")
+                var activity = {
+                    action: "block-profile",
+                    actor: req.user.username
+                }
             }
+
+            foundUser.activities.push(activity);
+
+
             foundUser.save();
 
             res.redirect("back")
         }
     })
 })
+
 
 
 module.exports = router;
