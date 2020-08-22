@@ -4,8 +4,6 @@
 <div class="row">
     <div class="col-md-offset-2 col-md-2">
 
-        <% if( user.avatar === "" ) { user.avatar = "https://i.dlpng.com/static/png/6728146_preview.png" } %>
-
         <img src="<%= user.avatar.url%>" style="width: 90%;  border-radius: 50%;" alt="">
 
         <% if( currentUser && (user._id.equals(currentUser._id))) { %>

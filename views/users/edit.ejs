@@ -26,19 +26,19 @@
                 <input class="custom-file-input" title="upload new file" type="file" id="image" name="user[image]"
                     accept="image/*"  onchange="foo()">
             </div>
-            <script>
-                function foo() {
-                    var input = document.getElementById("image")
-                    var previewImg = document.querySelector(".preview img")
-                    var src = window.URL.createObjectURL(input.files[0]);
-                    previewImg.setAttribute("src",src);
-                }
-            </script>
+           
             <div class="preview">
                 <div id="avatarImg">
-                    <img id="blah" src="<%=user.avatar.url %>" alt="your image" width="100" height="100" />
+                    <% if( user.avatar.public_id != "avatar-1577909_1280_pvmw0e" ) {%>
+                        <img id="blah" src="<%=user.avatar.url %>" alt="your image" width="100" height="100" />
+                        <button type="button" onclick="foo2()" >Delete?</button>
+                        <input style="display: none;" type="checkbox" name="deleteImage" onchange="foo3()" class="imageDeleteCheckbox" id="imageAvatar"
+                            value="<%= user.avatar.public_id %>">
+                    <% } %>
+
                 </div>
-                <!-- <img id="blah"  alt="your image" width="100" height="100" /> -->
+              
+                <img id="newImg" style="display: none;" alt="your image" width="100" height="100" />
             </div>
             <div class="form-group">
                 <label for="bio">Bio </label>
@@ -49,6 +49,31 @@
                 <button class="btn btn-lg btn-primary btn-block">Submit</button>
             </div>
         </form>
+
+        <script>
+            function foo() {
+                document.getElementById("newImg").style.display = "";
+                document.getElementById("avatarImg").style.display = "none";
+
+                var input = document.getElementById("image")
+                var previewImg = document.querySelector("#newImg")
+                var src = window.URL.createObjectURL(input.files[0]);
+                previewImg.setAttribute("src",src);
+            }
+
+            function foo2(){
+                document.querySelector("#imageAvatar").checked = true;
+                document.getElementById("avatarImg").style.display = "none";
+                
+            }
+
+            function foo3(){
+                if(document.querySelector("#imageAvatar").checked)
+                console.log("LOLLLL")
+            }
+            
+
+        </script>
 
 
     </div>

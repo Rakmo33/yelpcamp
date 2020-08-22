@@ -94,13 +94,19 @@ router.post("/verify", upload.single('image'), async function (req, res, next) {
   // Avatar image upload
   try {
     // File format checking
-    if (!req.file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+    if (req.file && !req.file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
       req.flash("error", "File format not supported! Please upload only png/jpg/jpeg files.");
       return res.redirect("back");
     }
 
-    // storing temporary path
-    globalAvatarPath = req.file.path;
+    if (req.file) {
+      // storing temporary path
+      globalAvatarPath = req.file.path;
+    }
+    else{
+      globalAvatarPath = "default"
+    }
+
 
   } catch (err) {
     req.flash("error", err.message);
@@ -114,7 +120,7 @@ router.post("/verify", upload.single('image'), async function (req, res, next) {
     lastName: req.body.lastname,
     email: req.body.email,
     avatar: {
-      url: req.file.path,//these fields will be updated when user will be verified
+      url: globalAvatarPath,//these fields will be updated when user will be verified
       public_id: "123"
     },
     bio: req.body.bio
@@ -132,7 +138,7 @@ router.post("/verify", upload.single('image'), async function (req, res, next) {
     },
     //! function2 : storing token
     function (token, done) {
-      
+
       // Storing the token and session info
       globalResetPasswordToken = token;
       globalResetPasswordExpires = Date.now() + 3600000; // 1 hour
@@ -166,15 +172,15 @@ router.post("/verify", upload.single('image'), async function (req, res, next) {
         done(err, 'done');
       });
     }
-  ], 
-  // ! Redirect to /verify
-  function (err) {
+  ],
+    // ! Redirect to /verify
+    function (err) {
 
-    if (err)
-      return next(err);
+      if (err)
+        return next(err);
 
-    res.redirect('/verify');
-  });
+      res.redirect('/verify');
+    });
 
 })
 
@@ -204,39 +210,67 @@ router.post("/register", upload.single('image'), function (req, res) {
       globalResetPasswordToken = undefined;
 
       // uploading temporarily saved DP and getting a permanent URL for it
-      cloudinary.v2.uploader.upload(globalAvatarPath, function (err, result) {
+      if(globalAvatarPath != "default"){
+        cloudinary.v2.uploader.upload(globalAvatarPath, function (err, result) {
 
-        if (err) {
-          req.flash('error', err.message);
-          return res.redirect('back');
-        }
-
-        // updating user info
-        newUser.avatar.url = result.secure_url;
-        newUser.avatar.public_id = result.public_id;
-
-        // Registering User
-        User.register(newUser, globalPassword, function (err, user) {
           if (err) {
-            console.log("[ ERROR : User cannot be registered! ]" + err.message)
-            req.flash("error", err.message)
-            res.redirect("back")
+            req.flash('error', err.message);
+            return res.redirect('back');
           }
-          else {
-
-            // User registered and logged in automatically!
-            req.logIn(user, function (err) {
-              done(err, user);
-            });
-
-            console.log("[ SUCCESS : User registered successfully! ]")
-            req.flash("success", "Signed Up Successfully! Welcome to yelpcamp, " + user.username + " !")
-
-            // For payment
-            res.redirect("/checkout")
-          }
-        })
-      });
+  
+          // updating user info
+          newUser.avatar.url = result.secure_url;
+          newUser.avatar.public_id = result.public_id;
+  
+          // Registering User
+          User.register(newUser, globalPassword, function (err, user) {
+            if (err) {
+              console.log("[ ERROR : User cannot be registered! ]" + err.message)
+              req.flash("error", err.message)
+              res.redirect("back")
+            }
+            else {
+  
+              // User registered and logged in automatically!
+              req.logIn(user, function (err) {
+                done(err, user);
+              });
+  
+              console.log("[ SUCCESS : User registered successfully! ]")
+              req.flash("success", "Signed Up Successfully! Welcome to yelpcamp, " + user.username + " !")
+  
+              // For payment
+              res.redirect("/checkout")
+            }
+          })
+        });
+      }else{
+         // updating user info
+         newUser.avatar.url = "https://res.cloudinary.com/rakmo33/image/upload/v1598011377/avatar-1577909_1280_pvmw0e.webp";
+         newUser.avatar.public_id = "avatar-1577909_1280_pvmw0e";
+ 
+         // Registering User
+         User.register(newUser, globalPassword, function (err, user) {
+           if (err) {
+             console.log("[ ERROR : User cannot be registered! ]" + err.message)
+             req.flash("error", err.message)
+             res.redirect("back")
+           }
+           else {
+ 
+             // User registered and logged in automatically!
+             req.logIn(user, function (err) {
+               done(err, user);
+             });
+ 
+             console.log("[ SUCCESS : User registered successfully! ]")
+             req.flash("success", "Signed Up Successfully! Welcome to yelpcamp, " + user.username + " !")
+ 
+             // For payment
+             res.redirect("/checkout")
+            }
+          })
+     }
     },
     //! function 2 : send account verification mail 
     function (user, done) {
@@ -260,11 +294,11 @@ router.post("/register", upload.single('image'), function (req, res) {
         done(err);
       });
     }
-  ], 
-  // ! function 3 : redirect to main page
-  function (err) {
-    res.redirect('/campgrounds');
-  });
+  ],
+    // ! function 3 : redirect to main page
+    function (err) {
+      res.redirect('/campgrounds');
+    });
 })
 
 
@@ -417,11 +451,11 @@ router.post('/forgot', function (req, res, next) {
       });
     }
   ],
-  //! functon 3 : redirect nowhere 
-   function (err) {
-    if (err) return next(err);
-    res.redirect('/forgot');
-  });
+    //! functon 3 : redirect nowhere 
+    function (err) {
+      if (err) return next(err);
+      res.redirect('/forgot');
+    });
 });
 
 // ? Password reset link to render password reset form
@@ -486,11 +520,11 @@ router.post('/reset/:token', function (req, res) {
         done(err);
       });
     }
-  ], 
-  // ! redirect to main page
-  function (err) {
-    res.redirect('/campgrounds');
-  });
+  ],
+    // ! redirect to main page
+    function (err) {
+      res.redirect('/campgrounds');
+    });
 });
 
 // ? AJAX SEARCH autocomplete

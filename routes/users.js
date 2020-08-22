@@ -41,14 +41,14 @@ router.get("/:id", middleware.isLoggedIn, middleware.isPaid, function (req, res)
 router.get("/", middleware.isLoggedIn, middleware.isAdmin, function (req, res) {
 
     // res.render("users/showall.ejs", { users: allUsers, currentUser: req.user})
-   
+
     User.find({}, function (err, allUsers) {
 
-        if(err){
+        if (err) {
             req.flash("error", "something went wrong!")
             res.redirect("/campgrounds")
         } else {
-            res.render("users/showall.ejs", { users: allUsers, currentUser: req.user})
+            res.render("users/showall.ejs", { users: allUsers, currentUser: req.user })
         }
     })
 })
@@ -76,8 +76,8 @@ router.put("/:id", upload.single('user[image]'), middleware.isLoggedIn, middlewa
         if (err) {
             req.flash("error", err.message);
             res.redirect("back");
-        } 
-        else {            
+        }
+        else {
             // if image is uploaded
             if (req.file) {
 
@@ -99,6 +99,13 @@ router.put("/:id", upload.single('user[image]'), middleware.isLoggedIn, middlewa
                     return res.redirect("back");
                 }
 
+            }
+
+            if (req.body.deleteImage && req.body.deleteImage.length) {
+
+                // updating user info
+                user.avatar.url = "https://res.cloudinary.com/rakmo33/image/upload/v1598011377/avatar-1577909_1280_pvmw0e.webp";
+                user.avatar.public_id = "avatar-1577909_1280_pvmw0e";
             }
 
             user.firstName = req.body.user.firstName;
