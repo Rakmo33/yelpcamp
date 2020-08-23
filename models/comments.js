@@ -11,7 +11,8 @@ var commentSchema = new mongoose.Schema({
         },
         username: String,
         isAdmin  : Boolean
-    }
+    },
+    avatar : String
 })
 
 //! step 4 : compile into a model

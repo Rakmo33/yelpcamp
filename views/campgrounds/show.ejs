@@ -54,17 +54,77 @@
         <div class="well">
 
             <div class="text-right">
-                <a class="btn btn-success" href="/campgrounds/<%= campground._id %>/comments/new">Add new
-                    comment!</a>
+                <!-- <a class="btn btn-success" href="/campgrounds/<%= campground._id %>/comments/new">Add new
+                comment!</a> -->
+                <!-- New add comment button -->
+                <a class="btn btn-success pull-right" role="button" data-toggle="collapse" href="#collapseComment"
+                    aria-expanded="false" id="add-new" aria-controls="collapseComment">
+                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                    Add new comment
+                </a>
             </div>
 
+            <!--Comment section title-->
+            <h4><strong>Comments <span class="glyphicon glyphicon glyphicon-comment" aria-hidden="true"></span></strong>
+            </h4>
+
+            <!--Collapse Add a comment form START-->
+            <div class="collapse" id="collapseComment">
+                <div class="well" style="border-left: 5px solid #00C851;">
+                    <% if(!currentUser) { %>
+                    <!--If the user is not logged in, direct him to the login page-->
+                    <h5>You need to login before you can comment. <a href="/login">Click here</a> to go to the login
+                        page.</h5>
+                    <% } %>
+                    <% if(currentUser) { %>
+                    <!--If the user is logged in, show the new comment form-->
+                    <form id="add-comment-form" action="/campgrounds/<%= campground._id %>/comments" method="POST">
+
+                        <div class="form-group">
+                            <textarea id="add-new2" class="textbox form-control" name="comment[text]"
+                                placeholder="Write your comment..." cols="50" style="resize: none;"
+                                form="add-comment-form" autofocus></textarea>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-success btn-sm">Comment <span class="glyphicon glyphicon-comment"
+                                    aria-hidden="true"></span></button>
+                        </div>
+                    </form>
+
+                    <style>
+                        #add-comment-form {
+                            display: grid;
+                            grid-template-columns: 10fr 1fr;
+                            align-items: center;
+                        }
+
+                        #textbox {
+                            overflow: hidden;
+                        }
+                    </style>
+
+                  
+
+                    <% } %>
+                </div>
+            </div>
+            <!--Collapse Add a comment form END-->
+
             <hr>
+
+            <!--Check if there are comments, if there are none say no comments.-->
+            <% if (campground.comments.length === 0) { %>
+            <em style="color: grey;">No comments yet.</em>
+            <% } %>
 
             <% campground.comments.forEach(function(comment){ %>
             <div class="row">
                 <div class="col-md-12">
+                    <img src="<%=comment.avatar%>" width="50px" height="50px" alt="">
 
-                    <strong><%= comment.author.username %></strong>
+                    <strong>
+                        <%= comment.author.username %>
+                    </strong>
                     <% console.log(comment.author) %>
                     <% if(comment.author.isAdmin) {%>
                     <span style="color: rgb(48, 161, 226);">(admin)</span>
@@ -78,10 +138,31 @@
                         <%= comment.text %>
                     </p>
                     <% if( currentUser && (comment.author.id.equals(currentUser._id))) { %>
-                    <a href="/campgrounds/<%=campground._id%>/comments/<%=comment._id%>/edit"
-                        class="btn btn-xs btn-warning">
-                        EDIT
-                    </a>
+
+                    <!--Edit button used for collapsing the edit comment form-->
+                    <a class="btn btn-xs btn-warning" role="button" data-toggle="collapse"
+                        href="#collapseEdit<%= comment._id %>" aria-expanded="false"
+                        aria-controls="collapse<%= comment._id %>">
+                        Edit</a>
+
+                    <!--Edit comment form-->
+                    <div class="collapse" id="collapseEdit<%= comment._id %>">
+                        <div class="well" style="border-left: 5px solid #ffbb33; margin-top: 15px;">
+                            <form id="edit-comment-form<%= comment._id %>"
+                                action="/campgrounds/<%= campground._id %>/comments/<%= comment._id %>?_method=PUT"
+                                method="POST">
+                                <div class="form-group">
+                                    <textarea class="textbox form-control" name="comment[text]"
+                                        placeholder="Write your comment..." cols="50" style="resize: none;"
+                                        form="edit-comment-form<%= comment._id %>"><%= comment.text %></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <button class="btn btn-warning btn-sm">Edit comment <span
+                                            class="glyphicon glyphicon-comment" aria-hidden="true"></span></button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                     <% } %>
                     <% if( currentUser && ( comment.author.id.equals(currentUser._id) || campground.author.id.equals(currentUser._id) || currentUser.isAdmin ) ) { %>
                     <form action="/campgrounds/<%=campground._id%>/comments/<%=comment._id%>?_method=DELETE"
@@ -106,7 +187,16 @@
 
 </div>
 
+<script>
+    $('.textbox').each(function(){
+        $(this).on('keyup keypress', function () {
+        $(this).height(0);
+        $(this).height(this.scrollHeight);
+    });
+   
+    })
 
+</script>
 
 <script>
     function initMap() {

@@ -1,6 +1,7 @@
 var express = require("express")
 var router = express.Router()
 var User = require("../models/user")
+var Comment = require("../models/comments")
 var middleware = require("../middleware")
 
 // ************ CLOUDINARY FOR ADDING IMAGE ************************
@@ -59,7 +60,7 @@ router.get("/:id/edit", middleware.isLoggedIn, middleware.isPaid, middleware.isN
         if (err) {
             req.flash("error", "something went wrong!")
             res.redirect("back")
-        } else {          
+        } else {
 
             res.render("users/edit.ejs", { user: foundUser })
         }
@@ -92,6 +93,19 @@ router.put("/:id", upload.single('user[image]'), middleware.isLoggedIn, middlewa
                     var result = await cloudinary.v2.uploader.upload(req.file.path);
                     user.avatar.public_id = result.public_id;
                     user.avatar.url = result.secure_url;
+
+                    Comment.find({ "author.username": user.username }, function (err, comments) {
+
+                        if (err) {
+                            req.flash("error", "something went wrong!")
+                            res.redirect("back")
+                        } else {
+                            comments.forEach(function (comment) {
+                                comment.avatar = result.secure_url;
+                                comment.save();
+                            })
+                        }
+                    })
 
                 } catch (err) {
                     req.flash("error", err.message);
