@@ -1,14 +1,57 @@
 <%- include("../partials/header") %>
 
+<style>
+    .rating {
+        /* width: 226px; */
+        /* margin: 0 auto 1em; */
+        margin: 0px auto;
+        font-size: 30px;
+        overflow: hidden;
+    }
+
+    .rating input {
+        opacity: 0;
+        position: absolute;
+    }
+
+    
+
+    .rating a,
+    .rating label {
+        float: right;
+        color: #aaa;
+        text-decoration: none;
+        -webkit-transition: color .4s;
+        -moz-transition: color .4s;
+        -o-transition: color .4s;
+        transition: color .4s;
+    }
+
+    .rating label.fill{
+        color: orange;
+    }
+
+    .rating label:hover~label,
+    .rating input:focus~label,
+    .rating label:hover,
+    .rating a:hover,
+    .rating a:hover~a,
+    .rating a:focus,
+    .rating a:focus~a {
+        color: orange;
+        cursor: pointer;
+    }
+</style>
 
 <div class="row">
 
     <div class="col-md-3">
         <p class="lead">YelpCamp</p>
         <div class="list-group">
-            <li class="list-group-item active">Info 1</li>
-            <li class="list-group-item">Info 2</li>
-            <li class="list-group-item">Info 3</li>
+            <li class="list-group-item active"> ₹ <%=campground.price%> per head </li>
+            <li class="list-group-item">Average Rating : <%= campground.overallRating %></li>
+            <li class="list-group-item"><%=campground.location%></li>
+
         </div>
 
         <div id="map"></div>
@@ -39,22 +82,89 @@
                 </p>
 
                 <% if( currentUser && ( campground.author.id.equals(currentUser._id) )) { %>
-                <a href="/campgrounds/<%=campground._id%>/edit" class="btn btn-xs btn-warning">Edit</a>
+                <a href="/campgrounds/<%=campground.slug%>/edit" class="btn btn-xs btn-warning">Edit</a>
                 <% } %>
                 <% if(currentUser  && ( campground.author.id.equals(currentUser._id)  || currentUser.isAdmin)) { %>
-                <form action="/campgrounds/<%=campground._id%>?_method=DELETE" method="POST" class="delete-form">
+                <form action="/campgrounds/<%=campground.slug%>?_method=DELETE" method="POST" class="delete-form">
                     <button class="btn btn-xs btn-danger ">Delete</button>
                 </form>
                 <%}%>
+
+               
               
 
             </div>
+
+           
+            
+
         </div>
 
         <div class="well">
 
+            <div style="    display: flex;
+            flex-direction: column;
+            align-items: center;">
+
+                <% var isRated = false %>
+                <% var starsGiven = 0 %>
+                <% campground.ratings.forEach(function(rating){ %>
+                <% if(!isRated) { %>
+                <% if(rating.author == currentUser.username){ %>
+                <% isRated = true %>
+                <% starsGiven = rating.stars %>
+                <% } %>
+                <% } else return %>
+                <%  }) %>
+
+               
+
+                <form class="rating" action="/campgrounds/<%= campground.slug %>/rating" method="POST">
+                    <input name="stars"  id="e5" type="radio" value="5"></a><label class='<%= starsGiven > 4 ? "fill" : "" %>' for="e5">★</label>
+                    <input name="stars"  id="e4" type="radio" value="4"></a><label class='<%= starsGiven > 3 ? "fill" : "" %>' for="e4">★</label>
+                    <input name="stars"  id="e3" type="radio" value="3"></a><label class='<%= starsGiven > 2 ? "fill" : "" %>' for="e3">★</label>
+                    <input name="stars"  id="e2" type="radio" value="2"></a><label class='<%= starsGiven > 1 ? "fill" : "" %>' for="e2">★</label>
+                    <input name="stars"  id="e1" type="radio" value="1"></a><label class='<%= starsGiven > 0 ? "fill" : "" %>' for="e1">★</label>
+                </form>          
+
+               
+                <% if(isRated){ %>
+                    <h3>
+                       You have rated this campground : <%=starsGiven%>/5
+                    </h3>
+                <%  }else{ %>
+                    
+                    <h3>
+                        Rate this campground
+                    </h3>
+                <% } %>
+               
+
+
+            </div>
+
+            <script>
+                document.querySelectorAll(".rating label").forEach(function (label) {
+                    label.addEventListener("click", () => {
+
+                        setTimeout(function () {
+                            document.querySelectorAll(".rating input").forEach(function (input) {
+                                if (input.checked) {
+                                    console.log("rated " + input.value + " stars")
+                                }
+
+                                document.querySelector(".rating").submit();
+                            })
+                        }, 300)
+
+                    })
+                })
+            </script>
+
+            <hr>
+
             <div class="text-right">
-                <!-- <a class="btn btn-success" href="/campgrounds/<%= campground._id %>/comments/new">Add new
+                <!-- <a class="btn btn-success" href="/campgrounds/<%= campground.slug %>/comments/new">Add new
                 comment!</a> -->
                 <!-- New add comment button -->
                 <a class="btn btn-success pull-right" role="button" data-toggle="collapse" href="#collapseComment"
@@ -65,7 +175,9 @@
             </div>
 
             <!--Comment section title-->
-            <h4><strong>Comments <span class="glyphicon glyphicon glyphicon-comment" aria-hidden="true"></span></strong>
+            <h4><strong>
+                    <span class="glyphicon glyphicon glyphicon-comment" aria-hidden="true"></span>
+                    Comments (<%=campground.comments.length%>)</strong>
             </h4>
 
             <!--Collapse Add a comment form START-->
@@ -78,7 +190,7 @@
                     <% } %>
                     <% if(currentUser) { %>
                     <!--If the user is logged in, show the new comment form-->
-                    <form id="add-comment-form" action="/campgrounds/<%= campground._id %>/comments" method="POST">
+                    <form id="add-comment-form" action="/campgrounds/<%= campground.slug %>/comments" method="POST">
 
                         <div class="form-group">
                             <textarea id="add-new2" class="textbox form-control" name="comment[text]"
@@ -103,7 +215,7 @@
                         }
                     </style>
 
-                  
+
 
                     <% } %>
                 </div>
@@ -149,7 +261,7 @@
                     <div class="collapse" id="collapseEdit<%= comment._id %>">
                         <div class="well" style="border-left: 5px solid #ffbb33; margin-top: 15px;">
                             <form id="edit-comment-form<%= comment._id %>"
-                                action="/campgrounds/<%= campground._id %>/comments/<%= comment._id %>?_method=PUT"
+                                action="/campgrounds/<%= campground.slug %>/comments/<%= comment._id %>?_method=PUT"
                                 method="POST">
                                 <div class="form-group">
                                     <textarea class="textbox form-control" name="comment[text]"
@@ -165,7 +277,7 @@
                     </div>
                     <% } %>
                     <% if( currentUser && ( comment.author.id.equals(currentUser._id) || campground.author.id.equals(currentUser._id) || currentUser.isAdmin ) ) { %>
-                    <form action="/campgrounds/<%=campground._id%>/comments/<%=comment._id%>?_method=DELETE"
+                    <form action="/campgrounds/<%=campground.slug%>/comments/<%=comment._id%>?_method=DELETE"
                         method="POST" class="delete-form">
                         <button class="btn btn-xs btn-danger ">Delete</button>
                     </form>
@@ -188,12 +300,12 @@
 </div>
 
 <script>
-    $('.textbox').each(function(){
+    $('.textbox').each(function () {
         $(this).on('keyup keypress', function () {
-        $(this).height(0);
-        $(this).height(this.scrollHeight);
-    });
-   
+            $(this).height(0);
+            $(this).height(this.scrollHeight);
+        });
+
     })
 
 </script>

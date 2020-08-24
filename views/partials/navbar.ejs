@@ -22,18 +22,135 @@
 
 
             <ul class="nav navbar-nav navbar-right">
+
                 <% if(!currentUser){ %>
                 <li class="<%= typeof page !== 'undefined' && page === 'login' ? 'active' : '' %>"><a
                         href="/login">Login</a></li>
                 <li class="<%= typeof page !== 'undefined' && page === 'register' ? 'active' : '' %>"><a
                         href="/register">Sign Up</a></li>
                 <% } else { %>
+                <li id="notif-btn">
+                    <a href="">Notifications</a>
+                    <ul id="notif-ul">
+                        <% var j = 0 %>
+                        <% for(var i=0; j<5 ;i++ ) {%>
+                        <%if(activities[i].actor != currentUser.username && activities[i].action == "comment"){%>
+                        <li>
+                            <a href="/campgrounds/<%=activities[i].campground.id%>">
+                                <%=activities[i].actor%> commented on <%=activities[i].campground.author%>'s campground
+                                "<%=activities[i].campground.name%>"
+                            </a>
+                        </li>
+                        <% j++ %>
+                        <% } else if(activities[i].actor != currentUser.username && activities[i].action == "post"){%>
+                            <li>
+                                <a href="/campgrounds/<%=activities[i].campground.id%>">
+                                    <%=activities[i].actor%> posted a new campground "<%=activities[i].campground.name%>".
+                                </a>
+                            </li>
+                            <% j++ %>
+                            <%}%>
+                        <% } %>
+
+                    </ul>
+                </li>
                 <li>
-                    <a href="/users/<%= currentUser.id %>">Signed In As <%= currentUser.username %></a>
+                    <a href="/users/<%= currentUser.id %>">
+                        <img src="<%= currentUser.avatar.url %>" alt="" width="25px" height="25px"
+                            style="border-radius: 50%;">
+                        <%= currentUser.username %>
+                    </a>
                 </li>
                 <li><a href="/logout">Logout</a></li>
                 <% } %>
             </ul>
+
+            <style>
+                /* Hide Dropdowns by Default */
+                nav ul ul {
+                    display: none;
+                    position: absolute;
+                    background: white;
+                    top: 40px;
+                    /* the height of the main nav */
+                }
+
+                /* Display Dropdowns on Hover */
+                nav ul li:hover>ul {
+                    display: inherit;
+                }
+
+                /* Fisrt Tier Dropdown */
+                nav ul ul li {
+                    width: 170px;
+                    float: none;
+                    display: list-item;
+                    position: relative;
+
+                }
+            </style>
+            <!-- jQuery for easy DOM manipulation -->
+            <script src="https://code.jquery.com/jquery-3.3.0.min.js"
+                integrity="sha256-RTQy8VOmNlT6b2PIRur37p6JEBZUE7o8wPgMvu18MC4=" crossorigin="anonymous">
+                </script>
+            <!-- Axios for AJAX requests -->
+            <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+            <script src="https://js.pusher.com/4.1/pusher.min.js"></script>
+
+
+            <script>
+                var pusher = new Pusher('2e203ca4fda4e729acd6', { cluster: "ap2" });
+
+                // retrieve the socket ID once we're connected
+                pusher.connection.bind('connected', function () {
+                    // attach the socket ID to all outgoing Axios requests
+                    axios.defaults.headers.common['X-Socket-Id'] = pusher.connection.socket_id;
+                });
+
+                // request permission to display notifications, if we don't alreay have it
+                Notification.requestPermission();
+
+
+                pusher.subscribe('notifications')
+                    .bind('new_comment', function (notif) {
+                        // if we're on the home page, show an "Updated" badge
+                        $('#notif-btn').append('<span class="badge badge-primary badge-pill">Updated</span>');
+
+
+                        var notification = new Notification(notif.comment.author.username + " just made a comment on " + notif.campground.name + ". Check it out.");
+                        notification.onclick = function (event) {
+                            window.location.href = '/campgrounds/' + notif.campground._id;
+                            event.preventDefault();
+                            notification.close();
+                        }
+                    });
+
+
+                pusher.subscribe('notifications')
+                    .bind('new_post', function (notif) {
+                        // if we're on the home page, show an "Updated" badge
+                        $('#notif-btn').append('<span class="badge badge-primary badge-pill">Updated</span>');
+                        document.querySelector("#notif-ul").innerHTML +=
+                            `
+                            <li>
+                                <a href="/campgrounds/${notif.campground.id}">
+                                    ${notif.campground.author} posted a new campground "${notif.campground.name}".
+                                </a>
+                            </li>
+                            
+                            `
+
+                        // alert(notif.campground.author)
+
+
+                        var notification = new Notification(notif.campground.author + " just posted a new campgorund" + ". Check it out.");
+                        notification.onclick = function (event) {
+                            window.location.href = '/campgrounds/' + notif.campground.id;
+                            event.preventDefault();
+                            notification.close();
+                        }
+                    });
+            </script>
         </div>
     </div>
 </nav>

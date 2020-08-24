@@ -15,14 +15,50 @@ var User = require("./models/user")
 var Campground = require("./models/campground")
 var Comment = require("./models/comments")
 
+Campground.find({},function(err, all){
+  all.forEach(function(one){
+    one.save();
+  })
+})
+
 flash = require("connect-flash")
 app.locals.moment = require('moment');
+
+var activities = [];
+
+User.find({}, function (err, allUsers) {
+
+    if (err) {
+      req.flash("error", "something went wrong!")
+      res.redirect("/campgrounds")
+    } else {
+
+     
+
+      allUsers.forEach(function (user) {
+        user.activities.forEach(function (activity) {
+          activities.push(activity)
+        })
+      })
+
+      activities.sort((a, b) => {
+        return a.createdAt < b.createdAt ? 1 : -1;
+      })
+    }
+})
+
+app.locals.activities = activities;
 
 //? Requiring Routes
 var campgroundRoutes = require("./routes/campgrounds")
 var commentRoutes = require("./routes/comments")
 var userRoutes = require("./routes/users")
 var indexRoutes = require("./routes/index")
+
+// pusher
+// import * as PushNotifications from '@pusher/push-notifications-web'
+
+// const PushNotifications = require('@pusher/push-notifications-web');
 
 
 app.use(express.json())
@@ -75,7 +111,7 @@ app.use(function (req, res, next) {
 
 //? Using routers and also shortening urls by adding prefixes
 app.use("/campgrounds", campgroundRoutes)
-app.use("/campgrounds/:id/comments", commentRoutes)
+app.use("/campgrounds/:slug/comments", commentRoutes)
 app.use("/users", userRoutes)
 app.use(indexRoutes)
 

@@ -1,4 +1,6 @@
 var express = require("express")
+var app = express();
+
 //? to access :id even after shortening url
 var router = express.Router({ mergeParams: true })
 var middleware = require("../middleware")
@@ -9,6 +11,33 @@ var Campground = require("../models/campground")
 var Comment = require("../models/comments");
 const { text } = require("body-parser");
 
+var User = require("../models/user")
+
+
+var activities = [];
+
+User.find({}, function (err, allUsers) {
+
+    if (err) {
+      req.flash("error", "something went wrong!")
+      res.redirect("/campgrounds")
+    } else {
+
+     
+
+      allUsers.forEach(function (user) {
+        user.activities.forEach(function (activity) {
+          activities.push(activity)
+        })
+      })
+
+      activities.sort((a, b) => {
+        return a.createdAt < b.createdAt ? 1 : -1;
+      })
+    }
+})
+
+app.locals.activities = activities;
 
 // Apply to all routes
 router.use(isLoggedIn, isPaid, isNotBlocked)
@@ -18,7 +47,7 @@ router.use(isLoggedIn, isPaid, isNotBlocked)
 //? NEW
 router.get("/new", function (req, res) {
     //find the campground with given id
-    Campground.findById(req.params.id).populate("comments").exec(function (err, foundCampground) {
+    Campground.findOne({slug : req.params.slug}).populate("comments").exec(function (err, foundCampground) {
         //render show tempate
         res.render("comments/new.ejs", { campground: foundCampground })
     })
@@ -27,7 +56,7 @@ router.get("/new", function (req, res) {
 //? CREATE
 router.post("/", function (req, res) {
     //looking up for campground using ID
-    Campground.findById(req.params.id, function (err, campground) {
+    Campground.findOne({slug : req.params.slug}, function (err, campground) {
         if (err) {
             res.redirect("/campgrounds")
         }
@@ -41,6 +70,8 @@ router.post("/", function (req, res) {
                     comment.author.username = req.user.username;
                     comment.author.id = req.user._id;
                     comment.author.isAdmin = req.user.isAdmin;
+                    console.log("8989-***" + req.user.avatar.url)
+                    comment.avatar = req.user.avatar.url;
                     comment.save();
 
                     campground.comments.push(comment);
@@ -60,8 +91,27 @@ router.post("/", function (req, res) {
                     req.user.activities.push(activity);
                     req.user.save();
 
+                    app.locals.activities.push(activity);
 
-                    res.redirect("/campgrounds/" + campground._id);
+
+                    let Pusher = require('pusher');
+                    let pusher = new Pusher({
+                        appId: process.env.PUSHER_APP_ID,
+                        key: process.env.PUSHER_APP_KEY,
+                        secret: process.env.PUSHER_APP_SECRET,
+                        cluster: process.env.PUSHER_APP_CLUSTER
+                    });
+
+                    var notif = {
+                        comment : comment,
+                        campground : campground
+                    }
+
+                    pusher.trigger('notifications', 'new_comment', notif, req.headers['x-socket-id']);
+
+
+
+                    res.redirect("/campgrounds/" + campground.slug);
                 }
             })
         }
@@ -77,7 +127,7 @@ router.get("/:comment_id/edit", middleware.checkCommentOwnership, function (req,
             res.redirect("back")
         } else {
 
-            res.render("comments/edit.ejs", { campgroundID: req.params.id, comment: foundComment })
+            res.render("comments/edit.ejs", { campgroundID: req.params.slug, comment: foundComment })
 
         }
     })
@@ -87,7 +137,7 @@ router.get("/:comment_id/edit", middleware.checkCommentOwnership, function (req,
 //? UPDATE
 router.put("/:comment_id", middleware.checkCommentOwnership, function (req, res) {
 
-    Campground.findById(req.params.id, function (err, campground) {
+    Campground.findOne({slug : req.params.slug}, function (err, campground) {
         if (err) {
             res.redirect("/campgrounds")
         }
@@ -108,11 +158,10 @@ router.put("/:comment_id", middleware.checkCommentOwnership, function (req, res)
                         actor: req.user.username
                     }
 
-                   
 
                     req.user.activities.push(activity);
                     req.user.save();
-                    res.redirect("/campgrounds/" + req.params.id)
+                    res.redirect("/campgrounds/" + req.params.slug)
                 }
             })
 
@@ -123,7 +172,7 @@ router.put("/:comment_id", middleware.checkCommentOwnership, function (req, res)
 //? DESTROY
 router.delete("/:comment_id", middleware.checkCommentOwnership, function (req, res) {
 
-    Campground.findById(req.params.id, function (err, campground) {
+    Campground.findOne({slug : req.params.slug}, function (err, campground) {
         if (err) {
             res.redirect("/campgrounds")
         }
@@ -148,7 +197,7 @@ router.delete("/:comment_id", middleware.checkCommentOwnership, function (req, r
                     req.user.save();
 
                     req.flash("success", "Comment Deleted Successfully!")
-                    res.redirect("/campgrounds/" + req.params.id)
+                    res.redirect("/campgrounds/" + req.params.slug)
                 }
             })
         }
@@ -156,4 +205,4 @@ router.delete("/:comment_id", middleware.checkCommentOwnership, function (req, r
 })
 
 
-    module.exports = router;
+module.exports = router;

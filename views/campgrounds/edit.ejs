@@ -3,7 +3,7 @@
     <h1 style="text-align: center;">Edit <%= campground.name %></h1>
     <div style="width: 30%; margin: 30px auto;">
 
-        <form id="postEditForm" action="/campgrounds/<%= campground._id %>?_method=PUT" method="POST"
+        <form id="postEditForm" action="/campgrounds/<%= campground.slug %>?_method=PUT" method="POST"
             enctype="multipart/form-data">
             <div class="form-group">
                 <input class="form-control" type="text" name="campground[name]" placeholder="name"
