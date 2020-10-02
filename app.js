@@ -11,43 +11,12 @@ var localStrategy = require("passport-local")
 
 var mongoose = require("mongoose")
 
-var User = require("./models/user")
-var Campground = require("./models/campground")
-var Comment = require("./models/comments")
-
-Campground.find({},function(err, all){
-  all.forEach(function(one){
-    one.save();
-  })
-})
-
 flash = require("connect-flash")
 app.locals.moment = require('moment');
 
-var activities = [];
+var User = require("./models/user")
 
-User.find({}, function (err, allUsers) {
 
-    if (err) {
-      req.flash("error", "something went wrong!")
-      res.redirect("/campgrounds")
-    } else {
-
-     
-
-      allUsers.forEach(function (user) {
-        user.activities.forEach(function (activity) {
-          activities.push(activity)
-        })
-      })
-
-      activities.sort((a, b) => {
-        return a.createdAt < b.createdAt ? 1 : -1;
-      })
-    }
-})
-
-app.locals.activities = activities;
 
 //? Requiring Routes
 var campgroundRoutes = require("./routes/campgrounds")
@@ -55,20 +24,14 @@ var commentRoutes = require("./routes/comments")
 var userRoutes = require("./routes/users")
 var indexRoutes = require("./routes/index")
 
-// pusher
-// import * as PushNotifications from '@pusher/push-notifications-web'
-
-// const PushNotifications = require('@pusher/push-notifications-web');
-
-
 app.use(express.json())
 
 //!PASSPORT CONFIGURATION
 
 app.use(require("express-session")({
-    secret: "This is rakmo's secret",
-    resave: false,
-    saveUninitialized: false
+  secret: "This is rakmo's secret",
+  resave: false,
+  saveUninitialized: false
 }))
 
 app.use(methodOverride("_method"))
@@ -103,18 +66,44 @@ app.use(express.static(__dirname + "/public"))
 
 //! Middleware to pass req.user to all routes via res.locals
 app.use(function (req, res, next) {
-    res.locals.currentUser = req.user;
-    res.locals.error = req.flash("error");
-    res.locals.success = req.flash("success");
-    next();
+  res.locals.currentUser = req.user;
+  res.locals.error = req.flash("error");
+  res.locals.success = req.flash("success");
+
+
+  var activities = [];
+
+  User.find({}, function (err, allUsers) {
+
+    if (err) {
+      req.flash("error", "something went wrong!")
+      res.redirect("/campgrounds")
+    } else {
+
+      allUsers.forEach(function (user) {
+        user.activities.forEach(function (activity) {
+          activities.push(activity)
+        })
+      })
+
+      activities.sort((a, b) => {
+        return a.createdAt < b.createdAt ? 1 : -1;
+      })
+    }
+  })
+
+  res.locals.activities = activities;
+
+
+  next();
 })
 
 //? Using routers and also shortening urls by adding prefixes
 app.use("/campgrounds", campgroundRoutes)
 app.use("/campgrounds/:slug/comments", commentRoutes)
 app.use("/users", userRoutes)
-app.use(indexRoutes)
+app.use("",indexRoutes)
 
 app.listen(process.env.PORT || 8000, process.env.IP, function () {
-    console.log("Server Started at : PORT 8000 or "+ process.env.PORT)
+  console.log("Server Started at : PORT 8000 or " + process.env.PORT)
 })

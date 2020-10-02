@@ -11,36 +11,34 @@ var Campground = require("../models/campground")
 var Comment = require("../models/comments");
 const { text } = require("body-parser");
 
-var User = require("../models/user")
-
-
-var activities = [];
-
-User.find({}, function (err, allUsers) {
-
-    if (err) {
-      req.flash("error", "something went wrong!")
-      res.redirect("/campgrounds")
-    } else {
-
-     
-
-      allUsers.forEach(function (user) {
-        user.activities.forEach(function (activity) {
-          activities.push(activity)
-        })
-      })
-
-      activities.sort((a, b) => {
-        return a.createdAt < b.createdAt ? 1 : -1;
-      })
-    }
-})
-
-app.locals.activities = activities;
-
 // Apply to all routes
 router.use(isLoggedIn, isPaid, isNotBlocked)
+
+
+// var User = require("../models/user")
+
+// var activities = [];
+
+// User.find({}, function (err, allUsers) {
+
+//     if (err) {
+//       req.flash("error", "something went wrong!")
+//       res.redirect("/campgrounds")
+//     } else {     
+
+//       allUsers.forEach(function (user) {
+//         user.activities.forEach(function (activity) {
+//           activities.push(activity)
+//         })
+//       })
+
+//       activities.sort((a, b) => {
+//         return a.createdAt < b.createdAt ? 1 : -1;
+//       })
+//     }
+// })
+
+// app.locals.activities = activities;
 
 
 //! COMMENTS ROUTE
@@ -81,7 +79,7 @@ router.post("/", function (req, res) {
                         action: "comment",
                         campground: {
                             name: campground.name,
-                            id: campground.id,
+                            slug: campground.slug,
                             author: campground.author.username
                         },
                         text: comment.text,
@@ -89,9 +87,10 @@ router.post("/", function (req, res) {
                     }
 
                     req.user.activities.push(activity);
+                    res.locals.activities.push(activity);
+
                     req.user.save();
 
-                    app.locals.activities.push(activity);
 
 
                     let Pusher = require('pusher');
@@ -102,12 +101,9 @@ router.post("/", function (req, res) {
                         cluster: process.env.PUSHER_APP_CLUSTER
                     });
 
-                    var notif = {
-                        comment : comment,
-                        campground : campground
-                    }
+                    
 
-                    pusher.trigger('notifications', 'new_comment', notif, req.headers['x-socket-id']);
+                    pusher.trigger('notifications', 'new_comment', activity, req.headers['x-socket-id']);
 
 
 
@@ -160,6 +156,8 @@ router.put("/:comment_id", middleware.checkCommentOwnership, function (req, res)
 
 
                     req.user.activities.push(activity);
+                    res.locals.activities.push(activity);
+
                     req.user.save();
                     res.redirect("/campgrounds/" + req.params.slug)
                 }
@@ -194,6 +192,8 @@ router.delete("/:comment_id", middleware.checkCommentOwnership, function (req, r
                     }
 
                     req.user.activities.push(activity);
+                    res.locals.activities.push(activity);
+
                     req.user.save();
 
                     req.flash("success", "Comment Deleted Successfully!")

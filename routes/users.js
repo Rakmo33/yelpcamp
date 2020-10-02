@@ -1,4 +1,6 @@
 var express = require("express")
+var app = express();
+
 var router = express.Router()
 var User = require("../models/user")
 var Comment = require("../models/comments")
@@ -23,6 +25,32 @@ cloudinary.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
+
+
+var User = require("../models/user")
+
+var activities = [];
+
+User.find({}, function (err, allUsers) {
+
+    if (err) {
+      req.flash("error", "something went wrong!")
+      res.redirect("/campgrounds")
+    } else {     
+
+      allUsers.forEach(function (user) {
+        user.activities.forEach(function (activity) {
+          activities.push(activity)
+        })
+      })
+
+      activities.sort((a, b) => {
+        return a.createdAt < b.createdAt ? 1 : -1;
+      })
+    }
+})
+
+app.locals.activities = activities;
 
 //****************************************************************** */
 
@@ -127,6 +155,8 @@ router.put("/:id", upload.single('user[image]'), middleware.isLoggedIn, middlewa
             }
 
             user.activities.push(activity);
+            app.locals.activities.push(activity);
+
             user.firstName = req.body.user.firstName;
             user.lastName = req.body.user.lastName;
             user.email = req.body.user.email;
@@ -170,6 +200,8 @@ router.get("/:id/block", middleware.isLoggedIn, middleware.isPaid, middleware.is
             }
 
             foundUser.activities.push(activity);
+            app.locals.activities.push(activity);
+
 
 
             foundUser.save();

@@ -41,34 +41,31 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-var User = require("../models/user")
 
+// var User = require("../models/user")
 
-var activities = [];
+// var activities = [];
 
-User.find({}, function (err, allUsers) {
+// User.find({}, function (err, allUsers) {
 
-    if (err) {
-        req.flash("error", "something went wrong!")
-        res.redirect("/campgrounds")
-    } else {
+//     if (err) {
+//       req.flash("error", "something went wrong!")
+//       res.redirect("/campgrounds")
+//     } else {     
 
+//       allUsers.forEach(function (user) {
+//         user.activities.forEach(function (activity) {
+//           activities.push(activity)
+//         })
+//       })
 
+//       activities.sort((a, b) => {
+//         return a.createdAt < b.createdAt ? 1 : -1;
+//       })
+//     }
+// })
 
-        allUsers.forEach(function (user) {
-            user.activities.forEach(function (activity) {
-                activities.push(activity)
-            })
-        })
-
-        activities.sort((a, b) => {
-            return a.createdAt < b.createdAt ? 1 : -1;
-        })
-    }
-})
-
-app.locals.activities = activities;
-
+// app.locals.activities = activities;
 
 // Apply to all routes
 // router.use(isLoggedIn, isPaid)
@@ -186,16 +183,17 @@ router.post("/", isLoggedIn, isPaid, isNotBlocked, upload.array('images'), funct
                     action: "post",
                     campground: {
                         name: newlyCreated.name,
-                        id: newlyCreated.id,
+                        slug: newlyCreated.slug,
                         author: newlyCreated.author.username
                     },
                     actor: req.user.username
                 }
 
                 req.user.activities.push(activity);
+                res.locals.activities.push(activity);
                 req.user.save();
 
-                app.locals.activities.push(activity);
+                var notif = activity;
 
                 let Pusher = require('pusher');
                 let pusher = new Pusher({
@@ -205,7 +203,6 @@ router.post("/", isLoggedIn, isPaid, isNotBlocked, upload.array('images'), funct
                     cluster: process.env.PUSHER_APP_CLUSTER
                 });
 
-                var notif = activity;
 
                 pusher.trigger('notifications', 'new_post', notif, req.headers['x-socket-id']);
 
@@ -327,6 +324,8 @@ router.put("/:slug", upload.array('images'), isLoggedIn, isPaid, middleware.chec
                 }
 
                 req.user.activities.push(activity);
+                res.locals.activities.push(activity);
+
                 req.user.save();
 
 
@@ -371,6 +370,8 @@ router.delete("/:slug", isLoggedIn, isPaid, middleware.checkCampgroundOwnership,
             }
 
             req.user.activities.push(activity);
+            res.locals.activities.push(activity);
+
             req.user.save();
             req.flash("success", "Successfully Deleted!");
             res.redirect("/campgrounds");

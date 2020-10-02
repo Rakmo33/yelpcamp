@@ -2,6 +2,8 @@
 var express = require("express")
 var router = express.Router()
 
+var app = express();
+
 // Password reset stuff
 var async = require("async");
 var nodemailer = require("nodemailer");
@@ -56,6 +58,40 @@ var globalEmail;
 var globalAvatarPath;
 var globalResetPasswordToken;
 var globalResetPasswordExpires;
+
+
+router.use(function (req, res, next) {
+  res.locals.currentUser = req.user;
+  res.locals.error = req.flash("error");
+  res.locals.success = req.flash("success");
+
+
+  var activities = [];
+
+  User.find({}, function (err, allUsers) {
+
+    if (err) {
+      req.flash("error", "something went wrong!")
+      res.redirect("/campgrounds")
+    } else {
+
+      allUsers.forEach(function (user) {
+        user.activities.forEach(function (activity) {
+          activities.push(activity)
+        })
+      })
+
+      activities.sort((a, b) => {
+        return a.createdAt < b.createdAt ? 1 : -1;
+      })
+    }
+  })
+
+  res.locals.activities = activities;
+
+
+  next();
+})
 
 //? HOME ROUTE //////////////////////////////////////////////
 router.get("/", function (req, res) {
@@ -229,6 +265,8 @@ router.post("/register", upload.single('image'), function (req, res) {
           }
 
           newUser.activities.push(activity);
+          res.locals.activities.push(activity);
+
 
           // Registering User
           User.register(newUser, globalPassword, function (err, user) {
@@ -435,6 +473,8 @@ router.post('/forgot', function (req, res, next) {
         }
 
         user.activities.push(activity)
+        res.locals.activities.push(activity);
+
 
         user.save(function (err) {
           done(err, token, user);
@@ -508,6 +548,8 @@ router.post('/reset/:token', function (req, res) {
             }
 
             user.activities.push(activity)
+            res.locals.activities.push(activity);
+
 
             user.save(function (err) {
               req.logIn(user, function (err) {
@@ -575,28 +617,7 @@ router.get('/autocomplete/', function (req, res, next) {
 
 router.get("/activities", isLoggedIn,isAdmin,   function (req, res) {
 
-  User.find({}, function (err, allUsers) {
-
-    if (err) {
-      req.flash("error", "something went wrong!")
-      res.redirect("/campgrounds")
-    } else {
-
-      var activities = [];
-
-      allUsers.forEach(function (user) {
-        user.activities.forEach(function (activity) {
-          activities.push(activity)
-        })
-      })
-
-      activities.sort((a, b) => {
-        return a.createdAt < b.createdAt ? 1 : -1;
-      })
-
-      res.render("users/activities.ejs", { activities: activities, currentUser: req.user })
-    }
-  })
+      res.render("users/activities.ejs")
 
 })
 

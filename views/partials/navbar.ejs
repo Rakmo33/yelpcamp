@@ -33,24 +33,28 @@
                     <a href="">Notifications</a>
                     <ul id="notif-ul">
                         <% var j = 0 %>
-                        <% for(var i=0; j<5 ;i++ ) {%>
-                        <%if(activities[i].actor != currentUser.username && activities[i].action == "comment"){%>
+                        <% if(activities.length >0) { %>
+                        <% for(var i = 0; j < 5 && i < activities.length; i++ ) {%>
+                        <!-- other users' comments on own campground -->
+                        <% if( activities[i].campground.author == currentUser.username && activities[i].actor != currentUser.username && activities[i].action == "comment"){%>
                         <li>
                             <a href="/campgrounds/<%=activities[i].campground.id%>">
-                                <%=activities[i].actor%> commented on <%=activities[i].campground.author%>'s campground
-                                "<%=activities[i].campground.name%>"
+                                <%=activities[i].actor%> commented on your campground
+                                <%=activities[i].campground.name%> : "<%=activities[i].text%>"
                             </a>
                         </li>
                         <% j++ %>
-                        <% } else if(activities[i].actor != currentUser.username && activities[i].action == "post"){%>
-                            <li>
-                                <a href="/campgrounds/<%=activities[i].campground.id%>">
-                                    <%=activities[i].actor%> posted a new campground "<%=activities[i].campground.name%>".
-                                </a>
-                            </li>
-                            <% j++ %>
-                            <%}%>
+                        <!-- other users posting campgrounds -->
+                        <% } else if(activities[i].campground.author != currentUser.username  && activities[i].action == "post"){%>
+                        <li>
+                            <a href="/campgrounds/<%=activities[i].campground.id%>">
+                                <%=activities[i].actor%> posted a new campground "<%=activities[i].campground.name%>".
+                            </a>
+                        </li>
+                        <% j++ %>
+                        <%}%>
                         <% } %>
+                        <%} %>
 
                     </ul>
                 </li>
@@ -78,20 +82,28 @@
                 /* Display Dropdowns on Hover */
                 nav ul li:hover>ul {
                     display: inherit;
+                    z-index: 500;
                 }
 
                 /* Fisrt Tier Dropdown */
                 nav ul ul li {
-                    width: 170px;
+                    width: 230px;
                     float: none;
                     display: list-item;
                     position: relative;
 
                 }
             </style>
-            
 
+            <!-- Axios for AJAX requests -->
+            <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+            <script src="https://js.pusher.com/4.1/pusher.min.js"></script>
+            <% if (currentUser) { %>
             <script>
+                 
+                    var current = '<% currentUser.username%>'
+                       
+
                 var pusher = new Pusher('2e203ca4fda4e729acd6', { cluster: "ap2" });
 
                 // retrieve the socket ID once we're connected
@@ -106,16 +118,33 @@
 
                 pusher.subscribe('notifications')
                     .bind('new_comment', function (notif) {
-                        // if we're on the home page, show an "Updated" badge
-                        $('#notif-btn').append('<span class="badge badge-primary badge-pill">Updated</span>');
 
 
-                        var notification = new Notification(notif.comment.author.username + " just made a comment on " + notif.campground.name + ". Check it out.");
-                        notification.onclick = function (event) {
-                            window.location.href = '/campgrounds/' + notif.campground._id;
-                            event.preventDefault();
-                            notification.close();
+                        console.log(notif.campground.author)
+                       
+                        if (notif.campground.author == current) {
+                            $('#notif-btn').append('<span class="badge badge-primary badge-pill">Updated</span>');
+
+                            var temp = document.querySelector("#notif-ul").innerHTML
+
+                            document.querySelector("#notif-ul").innerHTML =
+                                `
+                            <li>
+                                <a href="/campgrounds/${notif.campground.slug}">
+                                    ${notif.actor} commented on your campground ${notif.campground.name} : "${notif.text}" .
+                                </a>
+                            </li>
+                            
+                            ` + temp;
+
+                            var notification = new Notification(notif.actor + " just commented '" + notif.text + "' on " + notif.campground.name + ". Check it out.");
+                            notification.onclick = function (event) {
+                                window.location.href = '/campgrounds/' + notif.campground.slug;
+                                event.preventDefault();
+                                notification.close();
+                            }
                         }
+
                     });
 
 
@@ -123,27 +152,31 @@
                     .bind('new_post', function (notif) {
                         // if we're on the home page, show an "Updated" badge
                         $('#notif-btn').append('<span class="badge badge-primary badge-pill">Updated</span>');
-                        document.querySelector("#notif-ul").innerHTML +=
+
+                        var temp = document.querySelector("#notif-ul").innerHTML
+
+                        document.querySelector("#notif-ul").innerHTML =
                             `
                             <li>
-                                <a href="/campgrounds/${notif.campground.id}">
+                                <a href="/campgrounds/${notif.campground.slug}">
                                     ${notif.campground.author} posted a new campground "${notif.campground.name}".
                                 </a>
                             </li>
                             
-                            `
+                            ` + temp;
 
                         // alert(notif.campground.author)
 
 
                         var notification = new Notification(notif.campground.author + " just posted a new campgorund" + ". Check it out.");
                         notification.onclick = function (event) {
-                            window.location.href = '/campgrounds/' + notif.campground.id;
+                            window.location.href = '/campgrounds/' + notif.campground.slug;
                             event.preventDefault();
                             notification.close();
                         }
                     });
             </script>
+            <% } %>
         </div>
     </div>
 </nav>

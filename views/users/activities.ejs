@@ -2,11 +2,14 @@
 
 
 <div class="row">
+    <%=activities.length%>
 
     <ul>
         <% activities.forEach(function(activity){ %>
 
         <li>
+
+           
 
             <% if(activity.action === "post") { %>
             <%= activity.actor %> posted a campground <a href="/campgrounds/<%=activity.campground.id %>">

@@ -15,8 +15,8 @@
 
 
     <!-- jQuery CDN -->
-        <script src="https://code.jquery.com/jquery-3.1.1.min.js"
-            integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"
+        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
 
     <!-- Bootstrap JS CDN -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
@@ -114,6 +114,42 @@
             </div>
         </header>
 
+
+        <style>
+            .rating {
+                width: fit-content;
+                width: -moz-fit-content;
+                /* margin: 0 auto 1em; */
+                margin: 0px auto;
+                font-size: 20px;
+                overflow: hidden;
+            }
+
+            .rating input {
+                opacity: 0;
+                position: absolute;
+            }
+
+
+
+            .rating a,
+            .rating label {
+                float: right;
+                color: #aaa;
+                text-decoration: none;
+                -webkit-transition: color .4s;
+                -moz-transition: color .4s;
+                -o-transition: color .4s;
+                transition: color .4s;
+            }
+
+            .rating label.fill {
+                color: orange;
+            }
+
+            
+        </style>
+
         <div class="row text-center" style="display: flex; flex-wrap: wrap;">
 
             <% if(noMatch !== undefined) { %>
@@ -129,6 +165,30 @@
                     <div class="caption">
                         <h4> <%= campground.name %> </h4>
                     </div>
+
+                    <% if (campground.overallRating) { %>
+
+                        <% var starsGiven = Math.floor(campground.overallRating) %>
+                    <div class="rating">
+                        <input name="stars" id="e5" type="radio" value="5"></a><label
+                            class='<%= starsGiven > 4 ? "fill" : "" %>' for="e5">★</label>
+                        <input name="stars" id="e4" type="radio" value="4"></a><label
+                            class='<%= starsGiven > 3 ? "fill" : "" %>' for="e4">★</label>
+                        <input name="stars" id="e3" type="radio" value="3"></a><label
+                            class='<%= starsGiven > 2 ? "fill" : "" %>' for="e3">★</label>
+                        <input name="stars" id="e2" type="radio" value="2"></a><label
+                            class='<%= starsGiven > 1 ? "fill" : "" %>' for="e2">★</label>
+                        <input name="stars" id="e1" type="radio" value="1"></a><label
+                            class='<%= starsGiven > 0 ? "fill" : "" %>' for="e1">★</label>
+                    </div>
+                    <%} else { %>
+                    <h5><em>No reviews yet.</em></h5>
+                    <% } %>
+
+
+
+
+                    <br>
                     <p>
                         <a class="btn btn-primary" href="campgrounds/<%= campground.slug %>">More Info</a>
                     </p>
@@ -139,7 +199,7 @@
         </div>
 
     </div>
-   
+
 
 
 
