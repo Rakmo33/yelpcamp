@@ -1,4 +1,5 @@
 # Welcome to Rakmo's YelpCamp
+website hosted on : https://yelpcamp-project-001.herokuapp.com/
 
 Current Features Of The App : 
 
@@ -6,8 +7,6 @@ Current Features Of The App :
     + Email Verification at Sign Up
     + Registration Payment at Sign Up
     + Forgot Password Option
-
-
 
 3. **CRUD options** for all posts / comments
 
