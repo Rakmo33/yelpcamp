@@ -1,4 +1,4 @@
-# Welcome to Rakmo's YelpCamp
+# Welcome to Rakmo's Trek Blog!
 website hosted on : https://yelpcamp-project-001.herokuapp.com/
 
 Current Features Of The App : 
