@@ -1,4 +1,4 @@
-# 🥾 Yelpcamp (HikeHub)
+# 🥾 HikeHub
 
 HikeHub is a full-stack web application for discovering, reviewing, and managing trekking destinations.  
 It demonstrates real-world backend engineering concepts such as authentication, payments, geolocation, role-based access, and secure data handling.
@@ -119,8 +119,8 @@ It demonstrates real-world backend engineering concepts such as authentication, 
 
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/rakmo33/yelpcamp.git
-cd yelpcamp
+git clone https://github.com/rakmo33/HikeHub_Blog_App.git
+cd HikeHub_Blog_App
 ```
 
 ### 2️⃣ Install Dependencies
