@@ -123,12 +123,12 @@ git clone https://github.com/rakmo33/yelpcamp.git
 cd yelpcamp
 ```
 
-2️⃣ Install Dependencies
+### 2️⃣ Install Dependencies
 ```bash
 npm install
 ```
 
-3️⃣ Environment Configuration
+### 3️⃣ Environment Configuration
 
 Create a .env file in the root directory:
 
@@ -156,19 +156,19 @@ CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
-4️⃣ Start MongoDB
+### 4️⃣ Start MongoDB
 ```bash
 mongod
 ```
 
-5️⃣ Run the Application
+### 5️⃣ Run the Application
 ```bash
 npm start
 ```
 
-6️⃣ Visit 👉 http://localhost:8000
+### 6️⃣ Visit 👉 http://localhost:8000
 
-💳 Stripe Test Card (Development Only)
+## 💳 Stripe Test Card (Development Only)
 
 Use the following Stripe test card details for testing the registration payment flow:
 
@@ -179,7 +179,7 @@ CVV: 123
 ZIP Code: 12345
 ```
 
-🚀 Why This Project Matters
+## 🚀 Why This Project Matters
 
 HikeHub is not a UI demo — it reflects real-world backend challenges:
 
