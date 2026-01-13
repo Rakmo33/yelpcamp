@@ -5,7 +5,7 @@
     <!-- Make site responsive on mobile/tablet -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
-        YelpCamp!
+        HikeHub!
     </title>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
@@ -26,7 +26,7 @@
                     <span class="icon-bar"></span>
                 </button>
 
-                <a class="navbar-brand" href="/">YelpCamp</a>
+                <a class="navbar-brand" href="/">HikeHub</a>
             </div>
             <div id="navbar" class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
@@ -40,7 +40,7 @@
                 <ul class="nav navbar-nav navbar-right">
 
                     <% if(!currentUser){ %>
-                        <li class="<%= typeof page !== 'undefined' && page === 'login' ? 'active' : '' %>"><a href="/login">Login</a></li>
+                        <li class="<%= typeof page !== 'undefined' && page === 'login' ? 'active' : '' %>"><a href="/login">Log In</a></li>
                         <li class="<%= typeof page !== 'undefined' && page === 'register' ? 'active' : '' %>"><a href="/register">Sign Up</a></li>
                         <% } else { %>
                             <li id="notif-btn">
@@ -55,7 +55,7 @@
                                                         <a href="/campgrounds/<%=activities[i].campground.id%>">
                                                             <%=activities[i].actor%> commented "
                                                                 <%=activities[i].text%>" on
-                                                                    <%=activities[i].campground.author%>'s campground "
+                                                                    <%=activities[i].campground.author%>'s trek "
                                                                         <%=activities[i].campground.name%>"
                                                         </a>
                                                     </li>
@@ -64,7 +64,7 @@
                                                         <% } else if(activities[i].campground.author != currentUser.username  && activities[i].action == "post"){%>
                                                             <li>
                                                                 <a href="/campgrounds/<%=activities[i].campground.id%>">
-                                                                    <%=activities[i].actor%> posted a new campground "
+                                                                    <%=activities[i].actor%> posted a new hike "
                                                                         <%=activities[i].campground.name%>".
                                                                 </a>
                                                             </li>
@@ -82,7 +82,7 @@
                             <%= currentUser.username %>
                         </a>
                             </li>
-                            <li><a href="/logout">Logout</a></li>
+                            <li><a href="/logout">Log Out</a></li>
                             <% } %>
                 </ul>
 
@@ -188,7 +188,7 @@
         <div class="row">
 
             <div class="col-md-3">
-                <p class="lead">YelpCamp</p>
+                <p class="lead">HikeHub</p>
                 <div class="list-group">
                     <li class="list-group-item active"> ₹
                         <%=campground.price%> per head </li>
@@ -287,13 +287,13 @@
 
                                                                         <% if(isRated){ %>
                                                                             <h3>
-                                                                                You have rated this campground :
+                                                                                You have rated this trek :
                                                                                 <%=starsGiven%>/5
                                                                             </h3>
                                                                             <%  }else{ %>
 
                                                                                 <h3>
-                                                                                    Rate this campground
+                                                                                    Rate this trek
                                                                                 </h3>
                                                                                 <% } %>
 
@@ -512,7 +512,7 @@
                         `
                             <li>
                                 <a href="/campgrounds/${notif.campground.slug}">
-                                    ${notif.campground.author} posted a new campground "${notif.campground.name}".
+                                    ${notif.campground.author} posted a new hike "${notif.campground.name}".
                                 </a>
                             </li>
                             
@@ -541,7 +541,6 @@
                 var lat = Number(`<%= campground.lat %>`);
                 var lng = Number(`<%= campground.lng %>`);
 
-                // console.log(lat + "   " + lng)
                 var center = {
                     lat: lat,
                     lng: lng

@@ -68,7 +68,6 @@ router.post("/", function (req, res) {
                     comment.author.username = req.user.username;
                     comment.author.id = req.user._id;
                     comment.author.isAdmin = req.user.isAdmin;
-                    console.log("8989-***" + req.user.avatar.url)
                     comment.avatar = req.user.avatar.url;
                     comment.save();
 

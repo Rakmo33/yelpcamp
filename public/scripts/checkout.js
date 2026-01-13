@@ -8,7 +8,26 @@ function errorHandler(err) {
 
 var orderData = {
     items: [{ id: "yelpcamp-registration-fee" }],
-    currency: "inr"
+    currency: "usd",
+    description: "YelpCamp Registration Fee",
+    name: 'Jenny Rosen',
+    address: {
+        line1: '510 Townsend St',
+        city: 'San Francisco',
+        state: 'CA',
+        postal_code: '94103',
+        country: 'US', // Must be a non-IN ISO code
+    },
+    shipping: {
+        name: 'Jenny Rosen',
+        address: {
+        line1: '510 Townsend St',
+        city: 'San Francisco',
+        state: 'CA',
+        postal_code: '94103',
+        country: 'US', // Must be a non-IN ISO code
+        },
+    },
 };
 
 

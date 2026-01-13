@@ -12,7 +12,7 @@
            
 
             <% if(activity.action === "post") { %>
-            <%= activity.actor %> posted a campground <a href="/campgrounds/<%=activity.campground.id %>">
+            <%= activity.actor %> posted a trek <a href="/campgrounds/<%=activity.campground.id %>">
                 <%= activity.campground.name %> </a>
             <%= moment(activity.createdAt).fromNow() %>
             <% } %>
@@ -25,7 +25,7 @@
             <% } %>
 
             <% if(activity.action === "delete") { %>
-            <%= activity.actor %> deleted a campground
+            <%= activity.actor %> deleted a trek
             <%= moment(activity.createdAt).fromNow() %>
             <% } %>
 
@@ -51,7 +51,7 @@
             <% } %>
 
             <% if(activity.action === "register") { %>
-            <%= activity.actor %> registered their account on YelpCamp!
+            <%= activity.actor %> registered their account on HikeHub!
             <%= moment(activity.createdAt).fromNow() %>
             <% } %>
 

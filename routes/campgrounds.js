@@ -9,10 +9,9 @@ var NodeGeocoder = require('node-geocoder');
 const { isLoggedIn, isPaid, isNotBlocked } = require("../middleware");
 
 var options = {
-    provider: 'google',
+    provider: 'locationiq',
     httpAdapter: 'https',
-    apiKey: process.env.GEOCODER_API_KEY,
-    formatter: null
+    apiKey: 'pk.3b5b678333affcbd96f56db94abf0e64'
 };
 
 var geocoder = NodeGeocoder(options);
@@ -415,7 +414,6 @@ router.post("/:slug/rating", isLoggedIn, isNotBlocked, function (req, res) {
 
 
             foundCampground.overallRating = totalStars / foundCampground.totalRaters;
-            console.log("***I am here1")
             
 
             foundCampground.save(function (err) {
@@ -424,7 +422,6 @@ router.post("/:slug/rating", isLoggedIn, isNotBlocked, function (req, res) {
                     return res.redirect("back");
                 } else {
                     req.flash("success", "Successfully Updated!");
-                    console.log("***I am here2")
                     res.redirect("/campgrounds/" + req.params.slug);
                 }
               });

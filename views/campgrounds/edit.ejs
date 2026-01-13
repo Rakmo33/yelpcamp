@@ -37,7 +37,7 @@
                     value="<%= campground.location %>">
             </div>
             <div class="form-group">
-                <textarea class="form-control" name="campground[description]" placeholder="describe the campground..."
+                <textarea class="form-control" name="campground[description]" placeholder="describe the hike..."
                     cols="30" rows="10"><%=campground.description%></textarea>
 
             </div>
@@ -64,7 +64,6 @@
             let imgDeletions = document.querySelectorAll('.imageDeleteCheckbox:checked').length;
             // calculate total after removal of deletions and addition of new uploads
             let newTotal = existingImgs - imgDeletions + imageUploads;
-            console.log("**zing "+ newTotal)
             // if newTotal is greater than four
             if (newTotal > 5) {
                 // prevent form from submitting

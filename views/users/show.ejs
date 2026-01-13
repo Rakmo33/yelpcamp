@@ -56,21 +56,21 @@
         <% } %>
 
         <% if(activity.action === "comment") { %>
-        <%= user.username %> commented on <%= activity.campground.author %>'s campground <a
+        <%= user.username %> commented on <%= activity.campground.author %>'s trek <a
             href="/campgrounds/<%=activity.campground.id %>">
             <%= activity.campground.name %> </a> : "<%= activity.text %>"
         <%= moment(activity.createdAt).fromNow() %>
         <% } %>
 
         <% if(activity.action === "edit") { %>
-        <%= user.username %> edited <%= activity.campground.author %>'s campground <a
+        <%= user.username %> edited <%= activity.campground.author %>'s trek <a
             href="/campgrounds/<%=activity.campground.id %>">
             <%= activity.campground.name %> </a>
         <%= moment(activity.createdAt).fromNow() %>
         <% } %>
 
         <% if(activity.action === "delete") { %>
-        <%= user.username %> deleted a campground
+        <%= user.username %> deleted a trek
         <%= moment(activity.createdAt).fromNow() %>
         <% } %>
 

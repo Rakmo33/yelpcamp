@@ -321,7 +321,7 @@ router.post("/register", upload.single('image'), function (req, res) {
     //! function 2 : send account verification mail 
     function (user, done) {
       var smtpTransport = nodemailer.createTransport({
-        service: 'Gmail',
+        service: 'gmail',
         auth: {
           user: 'rakmo.yelpcamp@gmail.com',
           pass: process.env.GMAILPW
@@ -405,7 +405,7 @@ router.get('/checkout', isLoggedIn, (req, res) => {
 // ? POST Checkout
 router.post('/pay', isLoggedIn, async (req, res) => {
 
-  const { paymentMethodId, items, currency } = req.body;
+  const { paymentMethodId, items, currency, description, name, shipping, address } = req.body;
 
   const orderAmount = 100;
 
@@ -414,6 +414,8 @@ router.post('/pay', isLoggedIn, async (req, res) => {
     const intent = await stripe.paymentIntents.create({
       amount: orderAmount,
       currency: currency,
+      description,
+      shipping,
       payment_method: paymentMethodId,
       error_on_requires_action: true,
       confirm: true
