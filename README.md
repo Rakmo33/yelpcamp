@@ -1,4 +1,4 @@
-# 🥾 HikeHub
+# 🥾 Yelpcamp (HikeHub)
 
 HikeHub is a full-stack web application for discovering, reviewing, and managing trekking destinations.  
 It demonstrates real-world backend engineering concepts such as authentication, payments, geolocation, role-based access, and secure data handling.
