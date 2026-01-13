@@ -38,6 +38,30 @@ This project is backend-heavy and not hosted on GitHub Pages.
 
 ---
 
+env file =>
+
+GMAILPW=
+STRIPE_SECRET_KEY=95COxCh0TREmtkcqWXrnqI8w8xY00bRyyar3A
+GEOCODER_API_KEY=
+PUSHER_APP_ID=
+PUSHER_APP_KEY=
+PUSHER_APP_SECRET=
+PUSHER_APP_CLUSTER=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+
+Test user
+Username => odabir
+Password => 1234
+
+test card
+Card Number => 424242424242424242
+Expiry => 12/34
+CVV => 123
+ZIP => 12345
+
+
 
 
 # Welcome to Rakmo's Trek Blog!
