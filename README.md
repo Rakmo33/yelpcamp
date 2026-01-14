@@ -189,3 +189,9 @@ HikeHub is not a UI demo — it reflects real-world backend challenges:
 - API design
 - External service integrations
 - This project mirrors how production applications are built and maintained.
+
+
+## 🤝 Acknowledgements
+
+HikeHub is inspired by the **YelpCamp project** from the *Full Stack Web Developer Bootcamp* by **Colt Steele** on Udemy.  
+This project was built independently, adding trekking-focused features, custom UI, and personal enhancements.
